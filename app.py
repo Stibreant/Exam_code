@@ -117,7 +117,6 @@ def user(userid):
 @app.route("/api/userid/<username>", methods = ["GET"])
 def userid(username):
     userid = query_db("Select id from user_login where username=?;", get_db(), username.lower(), one=True)
-    print(userid)
     if userid==None:
         print(f"/api/userid/<username>: Could not find Userid {username}")
         return json.dumps(f"Could not find user")
@@ -197,8 +196,9 @@ def serve(username):
             sourceCode = request.form["sourceCode"]
             #userid = session["username"] 
             
-            print(userid)
             query_db("INSERT INTO Projects (userid, name, created, description, link) VALUES (?,?,?,?,?);", get_db(), userid, name, created, description, sourceCode)
+            id = query_db("SELECT MAX(ID) FROM Projects", get_db(), one=True)[0]
+            response["projectid"] = id
         else:
             errors = ["Unauthorized access"]
 
