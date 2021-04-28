@@ -6,22 +6,26 @@ let state = {
 
 let homeC = {
     template: /*html*/ ` 
-    <h1>Home page</h1>
 
-    <!--
-        <div class="framed" id="user">
-            <div>
-                <h2>Bio</h2>
-                <p>{{ this.bio }}</p>
-            </div>
-            <figure><img src="" alt="Profile_picture"></figure>
-        </div> 
-    -->
+    <navbar v-on:loggedout="this.get_data"></navbar>
+    <div id=main>
+        <h1>Home page</h1>
 
-    <br>
+        <!--
+            <div class="framed" id="user">
+                <div>
+                    <h2>Bio</h2>
+                    <p>{{ this.bio }}</p>
+                </div>
+                <figure><img src="" alt="Profile_picture"></figure>
+            </div> 
+        -->
 
-    <div v-for="project in this.projects">
-        <projectc v-bind:username="project.username" v-bind:displayusername="true" v-bind:name="project.name" v-bind:editable="false" v-bind:id="project.id" v-bind:created="project.created" v-bind:updated="project.updated" v-bind:description="project.description" v-bind:link="project.link" v-bind:private="project.private"></projectc>
+        <br>
+
+        <div v-for="project in this.projects">
+            <projectc v-bind:username="project.username" v-bind:displayusername="true" v-bind:name="project.name" v-bind:editable="false" v-bind:id="project.id" v-bind:created="project.created" v-bind:updated="project.updated" v-bind:description="project.description" v-bind:link="project.link" v-bind:private="project.private"></projectc>
+        </div>
     </div>
     `,
     data: function() { 
@@ -30,60 +34,59 @@ let homeC = {
             username: null,
             bio: ""
         }
-      },
-      created: function() {
-          this.get_data();
-      },
-      methods: {
-          get_data: async function(){
-              let response = await fetch("/api/projects");
-              if (response.status == 200){
-                  let result = await response.json();
-                  this.projects = result;
-              }
+    },
+    created: function() {
+        this.get_data();
+    },
+    methods: {
+        get_data: async function(){
+            let response = await fetch("/api/projects");
+            if (response.status == 200){
+                let result = await response.json();
+                this.projects = result;
+            }
 
-              for (let i = 0; i < this.projects.length; i++) {
-                  const element = this.projects[i];
+            for (let i = 0; i < this.projects.length; i++) {
+                const element = this.projects[i];
 
-                  
-
-                  let response = await fetch("/api/user/"+ element.userid);
-              if (response.status == 200){
-                  let result = await response.json();
-                  element.username = result.username;
-              }
-                  
-              }
+                let response = await fetch("/api/user/"+ element.userid);
+                if (response.status == 200){
+                    let result = await response.json();
+                    element.username = result.username;
+                }
+            }
 
               
-          }
-      }
+        }
+    }
 }
 
 let userC = { 
-    template: /*html*/ ` 
+    template: /*html*/ `
+    <navbar></navbar> 
+    <div id="main">
     <h1>Username {{ $route.params.id }}</h1>
 
-    <div class="framed" id="user">
-        <div>
-            <h2>Bio</h2>
-            <p>{{ this.bio }}</p>
+        <div class="framed" id="user">
+            <div>
+                <h2>Bio</h2>
+                <p>{{ this.bio }}</p>
+            </div>
+            <figure><img src="" alt="Profile_picture"></figure>
         </div>
-        <figure><img src="" alt="Profile_picture"></figure>
-    </div>
 
-    <br>
-    
-    <div v-for="project, i in this.projects">
-        <projectc v-on:deleted="this.updateDelete" v-on:edited="this.edit" v-bind:index="i" v-bind:editable="true" v-bind:name="project.name" v-bind:id="project.id" v-bind:created="project.created" v-bind:updated="project.updated" v-bind:description="project.description" v-bind:link="project.link" v-bind:private="project.private"></projectc>
-    </div>
+        <br>
+        
+        <div v-for="project, i in this.projects">
+            <projectc v-on:deleted="this.updateDelete" v-on:edited="this.edit" v-bind:index="i" v-bind:editable="true" v-bind:name="project.name" v-bind:id="project.id" v-bind:created="project.created" v-bind:updated="project.updated" v-bind:description="project.description" v-bind:link="project.link" v-bind:private="project.private"></projectc>
+        </div>
 
-    <div v-if="this.showedit">
-        <projectformc v-on:submit="this.updateEdit" v-bind:id="this.editinfo.id" v-bind:name="this.editinfo.name" v-bind:created="this.editinfo.created"  v-bind:description="this.editinfo.description" v-bind:sourceCode="this.editinfo.link" v-bind:private="this.editinfo.private"></projectformc>
-    </div>
+        <div v-if="this.showedit">
+            <projectformc v-on:submit="this.updateEdit" v-bind:id="this.editinfo.id" v-bind:name="this.editinfo.name" v-bind:created="this.editinfo.created"  v-bind:description="this.editinfo.description" v-bind:sourceCode="this.editinfo.link" v-bind:private="this.editinfo.private"></projectformc>
+        </div>
 
-    <projectformc v-on:newProject="this.newProject"></projectformc>
-    
+        <projectformc v-on:newProject="this.newProject"></projectformc>
+    </div>
     `,
     data: function() { 
         return {
@@ -116,8 +119,6 @@ let userC = {
                     this.bio = result.bio;
                 }
             }
-
-            
         },
         edit: function(id, name, created, description, link, private, index) {
             this.showedit = !this.showedit;
@@ -179,9 +180,9 @@ let navbarC = {
 
         created: async function() {
             let response = await fetch("/api/session");
-              if (response.status == 200){
-                  let result = await response.json();
-                  state.user.username = result;
+                if (response.status == 200){
+                    let result = await response.json();
+                    state.user.username = result;
               }
         },
         methods: {
@@ -191,6 +192,7 @@ let navbarC = {
                 });
                 if (response.status == 200){
                     state.user.username = "";
+                    this.$emit("loggedout")
                 }
             }
         }

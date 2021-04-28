@@ -87,22 +87,24 @@ let projectformC = {
 
 let loginformC = {
     template: /*html*/`
-        <h1>HOME PAGE</h1>
+        <navbar></navbar>
+        <div id="main">
+            <h1>HOME PAGE</h1>
 
-        <p v-if="errors.length">
-            <b>Please correct the following error(s):</b>
-            <ul>
-            <li v-for="error in errors">{{ error }}</li>
-            </ul>
-        </p>
+            <p v-if="errors.length">
+                <b>Please correct the following error(s):</b>
+                <ul>
+                <li v-for="error in errors">{{ error }}</li>
+                </ul>
+            </p>
 
-        <h2>Login form</h2>
-        <form action="javascript:void(0);" v-bind:onsubmit="this.login">
-            <label>Username: <input type="text" name="username" v-model="loginModel.username" /></label><br />
-            <label>Password: <input type="password" name="password" v-model="loginModel.password"></label><br />
-            <input type="submit" value="login">
-        </form>
-        
+            <h2>Login form</h2>
+            <form action="javascript:void(0);" v-bind:onsubmit="this.login">
+                <label>Username: <input type="text" name="username" v-model="loginModel.username" /></label><br />
+                <label>Password: <input type="password" name="password" v-model="loginModel.password"></label><br />
+                <input type="submit" value="login">
+            </form>
+        </div>
     `,
 
     data: function() { 
@@ -136,24 +138,26 @@ let loginformC = {
 
 let registerC = {
     template: /*html*/`
-        <h1>Register</h1>
+        <navbar></navbar>
+        <div id="main">
+            <h1>Register</h1>
 
-        <p v-if="errors.length">
-            <b>Please correct the following error(s):</b>
-            <ul>
-            <li v-for="error in errors">{{ error }}</li>
-            </ul>
-        </p>
+            <p v-if="errors.length">
+                <b>Please correct the following error(s):</b>
+                <ul>
+                <li v-for="error in errors">{{ error }}</li>
+                </ul>
+            </p>
 
-        <h2>Registration form</h2>
-        <form action="javascript:void(0);" v-bind:onsubmit="this.register">
-            <label>Username: </label> <br> <input type="text" name="username" v-model="registerModel.username" /><br/>
-            <label>Password:</label> <br> <input type="password" name="password" v-model="registerModel.password"><br/>
-            <label>Bio:</label> <br> <textarea name="bio" v-model="registerModel.bio" maxlength="250"></textarea><br/>
-            <label>Github username:</label> <br> <input type="text" name="bio" v-model="registerModel.github"><br/>
-            <input type="submit" value="Register">
-        </form>
-        
+            <h2>Registration form</h2>
+            <form action="javascript:void(0);" v-bind:onsubmit="this.register">
+                <label>Username: </label> <br> <input type="text" name="username" v-model="registerModel.username" /><br/>
+                <label>Password:</label> <br> <input type="password" name="password" v-model="registerModel.password"><br/>
+                <label>Bio:</label> <br> <textarea name="bio" v-model="registerModel.bio" maxlength="250"></textarea><br/>
+                <label>Github username:</label> <br> <input type="text" name="bio" v-model="registerModel.github"><br/>
+                <input type="submit" value="Register">
+            </form>
+        </div>
     `,
 
     data: function() { 

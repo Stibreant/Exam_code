@@ -77,8 +77,13 @@ def users():
             try:
                 hash = generate_password_hash(password)
                 query_db("INSERT INTO user_login (username, passwordhash, bio, github) VALUES (?,?,?,?)", get_db(), username, hash, bio, github)
+                id = query_db("SELECT MAX(ID) FROM user_login", get_db(), one=True)[0]
             except sqlite3.IntegrityError:
                 errors.append("Username is already taken")
+            else:
+                repos = db_update(github)
+                print(repos)
+                update_insert(repos, id)
     
     response = {}
     response["errors"] = errors

@@ -29,23 +29,21 @@
 </head>
 <body>
 
+<!--
+    <label class="switch">
+            <input type="checkbox">
+            <span class="slider round"></span>
+    </label>
+-->
 
 <div id="app">
-    <navbar></navbar>
-
-    <div id=main>
         <router-view></router-view>
         <router-view name="test"></router-view>
-    </div>
 
     <footerc></footerc>
 </div>
 
 <script>
-    
-
-
-
     let app = Vue.createApp({});
     app.use(router);
     app.component('home', homeC);
