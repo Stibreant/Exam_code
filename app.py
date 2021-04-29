@@ -5,6 +5,7 @@ from flask import current_app
 from flask.cli import with_appcontext
 import sqlite3, json
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 DATABASE = './database.db'
@@ -35,7 +36,7 @@ def check_password(username, password):
     """Checks if username-password combination is valid."""
     # user password data typically would be stored in a database
 
-    temp = query_db("SELECT passwordhash FROM user_login WHERE username=?", get_db(), username)
+    temp = query_db("SELECT passwordhash FROM users WHERE username=?", get_db(), username)
     if len(temp) != 0:
         hash = temp[0][0]
     else:
@@ -76,14 +77,15 @@ def users():
         if len(errors) == 0:
             try:
                 hash = generate_password_hash(password)
-                query_db("INSERT INTO user_login (username, passwordhash, bio, github) VALUES (?,?,?,?)", get_db(), username, hash, bio, github)
-                id = query_db("SELECT MAX(ID) FROM user_login", get_db(), one=True)[0]
+                query_db("INSERT INTO users (username, passwordhash, bio, github, timestamp) VALUES (?,?,?,?, datetime('now'))", get_db(), username, hash, bio, github)
+                userid = query_db("SELECT MAX(ID) FROM users", get_db(), one=True)[0]
             except sqlite3.IntegrityError:
                 errors.append("Username is already taken")
             else:
-                repos = db_update(github)
-                print(repos)
-                update_insert(repos, id)
+                if github != "":
+                    repos = db_update(github)
+                    print(repos)
+                    update_insert(repos, userid)
     
     response = {}
     response["errors"] = errors
@@ -92,10 +94,9 @@ def users():
 
 @app.route("/api/user/<userid>", methods=["GET", "PUT", "DELETE"])
 def user(userid):
-
     if request.method == "GET":
         try:
-            data = query_db("Select id, username, bio, color, email, twitter, github from user_login where id=?;", get_db(), int(userid))[0]
+            data = query_db("Select id, username, bio, color, email, twitter, github, timestamp from users where id=?;", get_db(), int(userid))[0]
             
             user = {}
             user["id"] = data[0]
@@ -119,9 +120,10 @@ def user(userid):
     response["errors"] = errors
     return json.dumps(response)
 
+# Route converts username to userid.
 @app.route("/api/userid/<username>", methods = ["GET"])
 def userid(username):
-    userid = query_db("Select id from user_login where username=?;", get_db(), username.lower(), one=True)
+    userid = query_db("Select id from users where username=?;", get_db(), username.lower(), one=True)
     if userid==None:
         print(f"/api/userid/<username>: Could not find Userid {username}")
         return json.dumps(f"Could not find user")
@@ -137,7 +139,7 @@ def login_toindex():
             errors = validate_input(request.form["username"], request.form["password"])
             
             if len(errors) == 0:
-                user = query_db("SELECT username FROM user_login WHERE username=?", get_db(), request.form["username"])
+                user = query_db("SELECT username FROM users WHERE username=?", get_db(), request.form["username"])
                 
                 if len(user) == 0: # Could not find user
                     errors.append("Incorrect username or password")
@@ -167,30 +169,42 @@ def login_toindex():
 @app.route("/api/<username>/projects", methods = ["GET", "POST", "DELETE"])
 def serve(username):
     if request.method == "GET":
-        userid = query_db("SELECT id FROM user_login WHERE username = ?;", get_db(), username.lower(), one=True)
+        user = query_db("SELECT id, timestamp, github FROM users WHERE username = ?;", get_db(), username.lower(), one=True)
+        userid = user[0]
+
         if userid == None:
             print("Could not find userid")
             return json.dumps(["Could not find userid"])
 
-        userid = userid[0]
+        timestamp = user[1]
+
+        # Check timestamp of user
+        if add_10_minutes(timestamp) < str(datetime.now()):
+            github = user[2]
+            repos = db_update(github)
+            update_insert(repos, userid)
+            # TODO check if ovveride or not :/
+            update_timestamp(userid)
+
+        
         result = []
         data = query_db("SELECT * FROM PROJECTS WHERE userid = ? ORDER BY updated DESC;", get_db(), int(userid))
         for i, row in enumerate(data):
             result.append(dict())
             result[i]["id"] = row[0]
             result[i]["userid"] = row[1]
-            result[i]["name"] = row[2]
-            result[i]["created"] = row[3]
-            result[i]["updated"] = row[4]
-            result[i]["description"] = row[5]
-            result[i]["website"] = row[6]
-            result[i]["link"] = row[7]
-            result[i]["private"] = row[8]
+            result[i]["githubid"] = row[2]
+            result[i]["name"] = row[3]
+            result[i]["created"] = row[4]
+            result[i]["updated"] = row[5]
+            result[i]["description"] = row[6]
+            result[i]["link"] = row[8]
+            result[i]["private"] = row[9]
 
         return json.dumps(result)
 
     if request.method == "POST":
-        userid = query_db("SELECT id FROM user_login WHERE username = ?;", get_db(), username, one=True)[0]
+        userid = query_db("SELECT id FROM users WHERE username = ?;", get_db(), username, one=True)[0]
         errors = []
         response = {}
         # TODO or user.role == Admin:
@@ -215,7 +229,7 @@ def feed():
     if request.method == "GET":
         username = session.get("username")
         if username != None:
-            userid = query_db("SELECT id FROM user_login WHERE username = ?;", get_db(), username, one=True)[0]
+            userid = query_db("SELECT id FROM users WHERE username = ?;", get_db(), username, one=True)[0]
             
             data = query_db("SELECT * FROM PROJECTS WHERE userid = ? ORDER BY updated DESC;", get_db(), int(userid))
         else: 
@@ -226,12 +240,13 @@ def feed():
             result.append(dict())
             result[i]["id"] = row[0]
             result[i]["userid"] = row[1]
-            result[i]["name"] = row[2]
-            result[i]["created"] = row[3]
-            result[i]["updated"] = row[4]
-            result[i]["description"] = row[5]
-            result[i]["link"] = row[7]
-            result[i]["private"] = row[8]
+            result[i]["githubid"] = row[2]
+            result[i]["name"] = row[3]
+            result[i]["created"] = row[4]
+            result[i]["updated"] = row[5]
+            result[i]["description"] = row[6]
+            result[i]["link"] = row[8]
+            result[i]["private"] = row[9]
 
         return json.dumps(result)
 
@@ -244,12 +259,13 @@ def project(projectid):
         result = dict()
         result["id"] = row[0]
         result["userid"] = row[1]
-        result["name"] = row[2]
-        result["created"] = row[3]
-        result["updated"] = row[4]
-        result["description"] = row[5]
-        result["link"] = row[7]
-        result["private"] = row[8]
+        result["githubid"] = row[2]
+        result["name"] = row[3]
+        result["created"] = row[4]
+        result["updated"] = row[5]
+        result["description"] = row[6]
+        result["link"] = row[8]
+        result["private"] = row[9]
 
         return json.dumps(result)
 
@@ -277,9 +293,9 @@ def project(projectid):
         name = request.form.get("name","").strip()
         created = request.form.get("created","").strip()
         description = request.form.get("description","").strip()
-        sourceCode = request.form.get("sourceCode","").strip()
+        link = request.form.get("link","").strip()
         
-        query_db("UPDATE projects SET name=?, created=?, description=?, link=? WHERE id = ?;", get_db(), name, created, description, sourceCode, id, one=True)
+        query_db("UPDATE projects SET name=?, created=?, description=?, link=? WHERE id = ?;", get_db(), name, created, description, link, id, one=True)
         row = query_db("SELECT * FROM projects WHERE id = ?;", get_db(), projectid, one=True)
 
         project = dict()
@@ -296,6 +312,16 @@ def project(projectid):
         result["errors"] = errors
         result["project"] = project
         return json.dumps(result)
+
+
+def update_timestamp(userid):
+    query_db("UPDATE users SET timestamp=datetime('now', 'localtime') WHERE id=?", get_db(), userid)
+
+def add_10_minutes(timestamp):
+    add = timedelta(minutes = 10)
+    original_time = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S')
+    result = original_time + add
+    return result.strftime("%Y-%m-%d %H:%M:%S")
 
 if __name__ == "__main__":
     app.run(debug=True)

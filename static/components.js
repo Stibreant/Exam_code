@@ -135,7 +135,7 @@ let userC = {
             this.projects[index].name = data.name;
             this.projects[index].created = data.created;
             this.projects[index].description = data.description;
-            this.projects[index].link = data.sourceCode;
+            this.projects[index].link = data.link;
             this.projects[index].private = data.private;
         },
         updateDelete: function(index) {
@@ -150,7 +150,7 @@ let userC = {
             newProject.name = data.name;
             newProject.created = data.created;
             newProject.description = data.description;
-            newProject.link = data.sourceCode;
+            newProject.link = data.link;
             newProject.private = data.private;
             this.projects.push(newProject)
         }

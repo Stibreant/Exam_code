@@ -12,7 +12,7 @@ let projectformC = {
             name: {default: ""}, 
             created: {default: ""},  
             description: {default: ""}, 
-            sourceCode: {default: ""}, 
+            link: {default: ""}, 
             private: {default: false},
     },
     template: /*html*/ ` 
@@ -28,7 +28,7 @@ let projectformC = {
             <label>Name: </label> <br> <input type="text" name="name" v-model="registerModel.name" /><br/>
             <label>Created:</label> <br> <input type="date" name="password" v-model="registerModel.created"><br/>
             <label>Description:</label> <br> <textarea name="description" v-model="registerModel.description" maxlength="250"></textarea><br/>
-            <label>Source code:</label> <br> <input type="text" name="sourceCode" v-model="registerModel.sourceCode"><br/>
+            <label>Source code:</label> <br> <input type="text" name="link" v-model="registerModel.link"><br/>
             <button v-if="this.id==null" v-on:click="this.register"> Register </button>
             <button v-else v-on:click="this.edit"> edit </button>
         </form>
@@ -49,7 +49,7 @@ let projectformC = {
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded",
                 },
-                body: "name=" + this.registerModel.name + "&created=" + this.registerModel.created + "&description=" + this.registerModel.description + "&sourceCode=" + this.registerModel.sourceCode
+                body: "name=" + this.registerModel.name + "&created=" + this.registerModel.created + "&description=" + this.registerModel.description + "&link=" + this.registerModel.link
             });
             if (response.status == 200){
                 let result = await response.json();
