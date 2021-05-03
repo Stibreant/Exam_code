@@ -1,4 +1,6 @@
-
+#app {
+  height: 100%;
+}
 
 body {
     margin: 0px;
@@ -13,10 +15,9 @@ body {
 }
 
 #main {
-
     flex: 1 0 auto;
-    max-width: 750px;
-    width: 90%;
+    max-width: 1000px;
+    width: 80%;
     margin: auto;
 }
 
@@ -67,13 +68,22 @@ a {
     padding: 10px;
 }
 
+.framed #text{
+  width: 90%;
+  margin: auto;
+}
+
 
 .fa {
     margin: 10px;
 }
 
-
-
+#searchlist {
+  height: 5em;
+  width: 10em;
+  scrollbar-width: none;
+  overflow: scroll;
+}
 
 /* The switch - the box around the slider */
 .switch {

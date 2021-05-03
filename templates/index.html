@@ -11,6 +11,7 @@
     <!-- include Vuex -->
     <script src="https://unpkg.com/vuex@4.0.0/dist/vuex.global.js"></script>
 
+    <script src="{{ url_for('static', filename='subcomponents.js') }}"></script>
     <script src="{{ url_for('static', filename='components.js') }}"></script>
     <script src="{{ url_for('static', filename='formcomponents.js') }}"></script>
     <script src="{{ url_for('static', filename='router.js') }}"></script>
@@ -40,7 +41,7 @@
         <router-view></router-view>
         <router-view name="test"></router-view>
 
-    <footerc></footerc>
+    <!-- <footerc></footerc> -->
 </div>
 
 <script>
@@ -52,7 +53,8 @@
     app.component('navbar', navbarC);
     app.component('projectc', projectC);
     app.component('projectformc', projectformC);
-    app.component('footerc', footerC);
+    app.component('searchc', searchC);
+    app.component('postc', postC);
     app.mount('#app');
 </script>
 

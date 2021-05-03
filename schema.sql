@@ -1,5 +1,7 @@
 DROP TABLE IF EXISTS Projects;
 DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS follows;
+DROP TABLE IF EXISTS posts;
 
 CREATE TABLE users(
     id INTEGER, 
@@ -28,4 +30,22 @@ CREATE TABLE projects(
     private BOOLEAN,
     override BOOLEAN,
     FOREIGN KEY(userid) REFERENCES users(id)
+);
+
+CREATE TABLE follows(
+    userid INTEGER,
+    followerid INTEGER,
+    PRIMARY KEY (followerid, userid)
+    FOREIGN KEY(followerid) REFERENCES users(id)
+    FOREIGN KEY(userid) REFERENCES users(id)
+);
+
+CREATE TABLE posts(
+    id INTEGER PRIMARY KEY,
+    type TEXT,
+    text VARCHAR(250),
+    userid INTEGER,
+    projectid INTEGER,
+    FOREIGN KEY(userid) REFERENCES users(id)
+    FOREIGN KEY(projectid) REFERENCES projects(id)
 );

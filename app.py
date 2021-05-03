@@ -11,6 +11,13 @@ app = Flask(__name__)
 DATABASE = './database.db'
 app.secret_key = 'some_secret'
 
+app.config.update(
+    SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax',
+    PERMANENT_SESSION_LIFETIME=600
+)
+
 # init_db() Creates the database
 def init_db():
     with app.app_context():
@@ -64,8 +71,10 @@ def index():
 
 @app.route("/api/users", methods=["GET", "POST", "PUT", "DELETE"])
 def users():
+    response = {}
+    errors = []
+
     if request.method == "POST":
-        
         
         username = request.form.get("username","").strip()
         password = request.form.get("password","")
@@ -77,7 +86,7 @@ def users():
         if len(errors) == 0:
             try:
                 hash = generate_password_hash(password)
-                query_db("INSERT INTO users (username, passwordhash, bio, github, timestamp) VALUES (?,?,?,?, datetime('now'))", get_db(), username, hash, bio, github)
+                query_db("INSERT INTO users (username, passwordhash, bio, github, timestamp) VALUES (?,?,?,?, datetime('now', 'localtime'))", get_db(), username, hash, bio, github)
                 userid = query_db("SELECT MAX(ID) FROM users", get_db(), one=True)[0]
             except sqlite3.IntegrityError:
                 errors.append("Username is already taken")
@@ -87,7 +96,13 @@ def users():
                     print(repos)
                     update_insert(repos, userid)
     
-    response = {}
+    if request.method == "GET":
+        users = []
+        query = query_db("SELECT username from users", get_db())
+        for user in query:
+            users.append(user[0])
+        response["result"] = users
+    
     response["errors"] = errors
     return json.dumps(response)
 
@@ -153,9 +168,16 @@ def login_toindex():
             errors = ["Please log out first"]
 
     if request.method == "GET":
-        user = session.get("username")
-        if user == None:
-            user = ""
+        user = dict()
+        username = session.get("username")
+        if username == None:
+            user["username"] = ""
+            user["userid"] = ""
+            return json.dumps(user)
+        
+        userid = query_db("Select id from users where username=?;", get_db(), username.lower(), one=True)
+        user["userid"] = userid[0]
+        user["username"] = username
         return json.dumps(user)
 
     if request.method == "DELETE":
@@ -166,21 +188,20 @@ def login_toindex():
     return json.dumps(response)
 
 """ /api/projects returns a json object with the projects. JS gets this so we can use AJAX """
-@app.route("/api/<username>/projects", methods = ["GET", "POST", "DELETE"])
-def serve(username):
+@app.route("/api/<userid>/projects", methods = ["GET", "POST", "DELETE"])
+def serve(userid):
     if request.method == "GET":
-        user = query_db("SELECT id, timestamp, github FROM users WHERE username = ?;", get_db(), username.lower(), one=True)
-        userid = user[0]
+        user = query_db("SELECT timestamp, github FROM users WHERE id = ?;", get_db(), userid, one=True)
 
-        if userid == None:
+        if user == None:
             print("Could not find userid")
             return json.dumps(["Could not find userid"])
 
-        timestamp = user[1]
+        timestamp = user[0]
 
         # Check timestamp of user
         if add_10_minutes(timestamp) < str(datetime.now()):
-            github = user[2]
+            github = user[1]
             repos = db_update(github)
             update_insert(repos, userid)
             # TODO check if ovveride or not :/
@@ -204,18 +225,22 @@ def serve(username):
         return json.dumps(result)
 
     if request.method == "POST":
-        userid = query_db("SELECT id FROM users WHERE username = ?;", get_db(), username, one=True)[0]
+        session_userid = query_db("SELECT id FROM users WHERE username = ?;", get_db(), session.get("username"), one=True)
         errors = []
         response = {}
+        if session_userid == None:
+            session_userid = [None]
+            print(session_userid)
         # TODO or user.role == Admin:
-        if session.get("username") == username:
+        print(userid)
+        if str(session_userid[0]) == userid:
             name = request.form["name"]
             created = request.form["created"]
             description = request.form["description"]
-            sourceCode = request.form["sourceCode"]
+            link = request.form.get("link","").strip()
             #userid = session["username"] 
             
-            query_db("INSERT INTO Projects (userid, name, created, description, link) VALUES (?,?,?,?,?);", get_db(), userid, name, created, description, sourceCode)
+            query_db("INSERT INTO Projects (userid, name, created, description, link) VALUES (?,?,?,?,?);", get_db(), userid, name, created, description, link)
             id = query_db("SELECT MAX(ID) FROM Projects", get_db(), one=True)[0]
             response["projectid"] = id
         else:
@@ -313,6 +338,56 @@ def project(projectid):
         result["project"] = project
         return json.dumps(result)
 
+# Route for updating followers
+@app.route("/api/followers/<userid>", methods = ["GET", "POST"])
+def followers(userid):
+    if request.method == "POST":
+        result = dict()
+        
+        followerid = request.form["followerid"]
+        query_db("INSERT INTO follows (userid, followerid) VALUES (?,?);", get_db(), userid, followerid)
+        
+        result["message"] = f"User: {followerid} now follows user: {userid}"
+        return json.dumps(result)
+
+    if request.method == "GET":
+        result = dict()
+        user_ids = query_db("SELECT followerid FROM follows WHERE userid=?", get_db(), userid)
+
+        followers=[]
+        for id in user_ids:
+            followers.append(id[0])
+
+        result["followers"] = followers
+        return json.dumps(result)
+
+@app.route("/api/follower/<userid>/<followerid>", methods = ["GET", "DELETE"])
+def follower(userid, followerid):
+    if request.method == "GET":
+        print(userid)
+        print(followerid)
+        query = query_db("SELECT * from follows WHERE userid=? AND followerid=?;", get_db(), userid, followerid, one=True)
+        if query == None:
+            return json.dumps(False)
+        return json.dumps(True)
+    
+    if request.method == "DELETE":
+        query_db("DELETE FROM follows WHERE userid=? AND followerid=?;", get_db(), userid, followerid, one=True)
+        return json.dumps(f"User: {followerid} stopped following user: {userid}")
+
+# Users that the user follows
+@app.route("/api/following/<userid>", methods = ["GET"])
+def following(userid):
+    if request.method == "GET":
+        result = dict()
+        user_ids = query_db("SELECT userid FROM follows WHERE followerid=?", get_db(), userid)
+
+        followers=[]
+        for id in user_ids:
+            followers.append(id[0])
+
+        result["followers"] = followers
+        return json.dumps(result)
 
 def update_timestamp(userid):
     query_db("UPDATE users SET timestamp=datetime('now', 'localtime') WHERE id=?", get_db(), userid)

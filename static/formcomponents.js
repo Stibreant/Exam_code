@@ -9,11 +9,102 @@ let projectformC = {
     },
     props: {
             id: {default: null},
+            userid: {default: null},
             name: {default: ""}, 
             created: {default: ""},  
             description: {default: ""}, 
             link: {default: ""}, 
             private: {default: false},
+    },
+    template: /*html*/ ` 
+    <p v-if="errors.length">
+            <b>Please correct the following error(s):</b>
+            <ul>
+            <li v-for="error in errors">{{ error }}</li>
+            </ul>
+        </p>
+
+        <h2>Project form</h2>
+        <form action="javascript:void(0);">
+            <label>Name: </label> <br> <input type="text" name="name" v-model="registerModel.name" /><br/>
+            <label>Created:</label> <br> <input type="date" name="password" v-model="registerModel.created"><br/>
+            <label>Description:</label> <br> <textarea name="description" v-model="registerModel.description" maxlength="250"></textarea><br/>
+            <label>Source code:</label> <br> <input type="text" name="link" v-model="registerModel.link"><br/>
+            <button v-if="this.id==null" v-on:click="this.register"> Register </button>
+            <button v-else v-on:click="this.edit"> edit </button>
+        </form>
+        
+    `,
+
+    data: function() { 
+        return {
+            registerModel: {name: this.name, created: this.created, description: this.description, link: this.link},
+            errors: [],
+        }
+      },
+
+    methods: {
+        register: async function(){
+            if(this.registerModel.link == null){
+                this.registerModel.link == "";
+            }
+            let response = await fetch("/api/"+ this.userid + "/projects", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: "name=" + this.registerModel.name + "&created=" + this.registerModel.created + "&description=" + this.registerModel.description + "&link=" + this.registerModel.link
+            });
+            if (response.status == 200){
+                let result = await response.json();
+                this.errors = result.errors;
+                if (this.errors.length == 0) {
+                    this.registerModel.id = result.projectid;
+                    this.$emit('newProject', this.registerModel);
+                }
+                
+                /*if (this.errors.length == 0){
+                    this.$router.push('/user/' + state.user.username);
+                }*/
+            }
+            
+        },
+        edit: async function(){
+
+            let response = await fetch("/api/project/" + this.id, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: "id=" + this.id + "&name=" + this.registerModel.name + "&created=" + this.registerModel.created + "&description=" + this.registerModel.description + "&link=" + this.registerModel.link
+            });
+            if (response.status == 200){
+                let result = await response.json();
+                this.errors = result.errors;
+                if (this.id != null){
+                    this.$emit('submit', this.registerModel);
+                }
+                
+                /*if (this.errors.length == 0){
+                    this.$router.push('/user/' + state.user.username);
+                }*/
+            }
+        }
+    }    
+};
+
+let postformC = {
+    emits: {
+        submit: (registerModel) => {
+            return true
+        },
+    },
+    props: {
+            id: {default: null},
+            userid: {default: null},
+            text: {default: ""}, 
+            type: {default: "updated"},  
+            projectid: {default: false},
     },
     template: /*html*/ ` 
     <p v-if="errors.length">
@@ -44,7 +135,10 @@ let projectformC = {
 
     methods: {
         register: async function(){
-            let response = await fetch("/api/"+ this.$route.params.id + "/projects", {
+            if(this.registerModel.link == null){
+                this.registerModel.link == "";
+            }
+            let response = await fetch("/api/"+ this.userid + "/projects", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded",
@@ -54,8 +148,11 @@ let projectformC = {
             if (response.status == 200){
                 let result = await response.json();
                 this.errors = result.errors;
-                this.registerModel.id = result.projectid;
-                this.$emit('newProject', this.registerModel);
+                if (this.errors.length == 0) {
+                    this.registerModel.id = result.projectid;
+                    this.$emit('newProject', this.registerModel);
+                }
+                
                 /*if (this.errors.length == 0){
                     this.$router.push('/user/' + state.user.username);
                 }*/
@@ -68,7 +165,7 @@ let projectformC = {
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded",
                 },
-                body: "id=" + this.id + "&name=" + this.registerModel.name + "&created=" + this.registerModel.created + "&description=" + this.registerModel.description + "&sourceCode=" + this.registerModel.sourceCode
+                body: "id=" + this.id + "&name=" + this.registerModel.name + "&created=" + this.registerModel.created + "&description=" + this.registerModel.description + "&link=" + this.registerModel.link
             });
             if (response.status == 200){
                 let result = await response.json();
@@ -84,6 +181,7 @@ let projectformC = {
         }
     }    
 };
+
 
 let loginformC = {
     template: /*html*/`
@@ -130,6 +228,7 @@ let loginformC = {
 
                 if (result.errors.length == 0){
                     state.user.username = this.loginModel.username;
+                    this.$router.push('/user/' + state.user.username);
                 }
             }
         }

@@ -36,32 +36,38 @@ def query_db(query, db, *args, **kwargs):
 # db_update() Updates the information, should be run once a day with the github API
 def db_update(username):
     result_list = []
-    link = "https://api.github.com/users/" + username + "/repos"
-    with urllib.request.urlopen(link) as url:
-        data = json.loads(url.read().decode())
-        for repo in data:
-            try:
-                tmp = dict()
-                tmp["name"] = repo["name"]
-                tmp["created"] = repo["created_at"].split("T")[0]
-                tmp["updated"] = repo["updated_at"].split("T")[0]
-                tmp["description"] = repo["description"]
-                tmp["website"] = repo["html_url"]
-                tmp["link"] = repo["html_url"]
-                tmp["private"] = repo["private"]
-                tmp["githubid"] = repo["id"]
-                result_list.append(tmp)
-            except:
-                print("Maybe not a repo?")
-                print(repo)
-    return result_list
-
+    if username != "":
+        link = "https://api.github.com/users/" + username + "/repos"
+        with urllib.request.urlopen(link) as url:
+            data = json.loads(url.read().decode())
+            for repo in data:
+                try:
+                    tmp = dict()
+                    tmp["name"] = repo["name"]
+                    tmp["created"] = repo["created_at"].split("T")[0]
+                    tmp["updated"] = repo["updated_at"].split("T")[0]
+                    tmp["description"] = repo["description"]
+                    tmp["website"] = repo["html_url"]
+                    tmp["link"] = repo["html_url"]
+                    tmp["private"] = repo["private"]
+                    tmp["githubid"] = repo["id"]
+                    result_list.append(tmp)
+                except:
+                    print("Maybe not a repo?")
+                    print(repo)
+        return result_list
+    return []
 
 def update_insert(repos, userid):
+    oldIDs = query_db("SELECT githubid from projects where userid=?", get_db(), userid)
+    if len(oldIDs) == 0:
+        oldIDs = [[]]
     for repo in repos:
-        print(repo["githubid"])
-        sql = f"""INSERT INTO Projects (userid, githubid ,name, created, updated, description, website, link, private)
-        VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);
-        """
-        print(sql)
-        query_db(sql, get_db(), userid, repo["githubid"], repo["name"], repo["created"], repo["updated"], repo["description"] ,repo["website"] ,repo["link"],repo["private"])
+        if repo["githubid"] not in oldIDs[0]: 
+            sql = f"INSERT INTO projects (userid, githubid ,name, created, updated, description, website, link, private) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);"
+            query_db(sql, get_db(), userid, repo["githubid"], repo["name"], repo["created"], repo["updated"], repo["description"] ,repo["website"] ,repo["link"],repo["private"])
+            id = query_db("SELECT MAX(ID) FROM Projects", get_db(), one=True)[0]
+            sql = f"INSERT INTO posts (type, text, userid, projectid) VALUES(?, ?, ?, ?);"
+            query_db(sql, get_db(),"created", None, userid, id)
+        else: # elif not repo["overwrite"]: update_project()
+            print("Project already exists")
