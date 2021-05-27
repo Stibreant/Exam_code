@@ -140,6 +140,10 @@ let postformC = {
 
     methods: {
         post: async function() {
+            if (this.postModel.projectid == null){
+                alert("You can't make a post without connecting it to a project")
+                return 
+            }
             let response = await fetch("/api/"+ this.userid + "/posts", {
                 method: "POST",
                 headers: {

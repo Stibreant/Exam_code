@@ -131,7 +131,10 @@ def user(userid):
         return json.dumps(user)
         
     
-        
+    if request.method == "DELETE":
+        query_db("DELETE FROM users WHERE id=?", get_db(), userid)
+        session.pop("userid")
+        return json.dumps("User deleted")
     else:
         errors = "unsupported method"
     

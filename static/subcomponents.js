@@ -150,8 +150,7 @@ let projectC = {
 
                     <br>
                     <div v-if="this.editable==true">
-                        <button v-on:click="$emit('edited', this.id, this.name, this.created, this.description, this.link, this.private, this.index)">EDIT</button>
-                        <button v-on:click="this.delete">DELETE</button>
+                        <button v-on:click="$emit('edited', this.id, this.name, this.created, this.description, this.link, this.private, this.index)">EDIT</button>                     
 
                         <label class="switch" style="float: right;">
                             <input type="checkbox" @click="this.checkbox" v-model="this.override">

@@ -149,7 +149,7 @@ let userC = {
                     <button v-else v-on:click="this.updatefollow">UNFOLLOW</button>
                 </div>
                 
-                
+                <button v-if="this.loggedInUser.username==$route.params.id" @click="this.deleteUser"> DELETE ACCOUNT </button>
                 
             </div>
         </div>
@@ -169,7 +169,7 @@ let userC = {
         <i v-if="this.loggedInUser.username==$route.params.id" class="fa fa-plus-square fa-2x" aria-hidden="true" @click="this.showprojectform = !this.showprojectform"></i>
         <projectformc v-if="this.showprojectform" v-on:newProject="this.newProject" :userid="this.loggedInUser.userid"></projectformc>
 
-        <projectc v-for="project, i in this.projects" v-on:deleted="this.updateDelete" v-on:edited="this.edit" v-bind:index="i" v-bind:editable="this.editable" v-bind:name="project.name" v-bind:id="project.id" v-bind:created="project.created" v-bind:updated="project.updated" v-bind:description="project.description" v-bind:link="project.link" v-bind:private="project.private" :override="project.override"></projectc>
+        <projectc v-for="project, i in this.projects" v-on:deleted="this.deleteProject" v-on:edited="this.edit" v-bind:index="i" v-bind:editable="this.editable" v-bind:name="project.name" v-bind:id="project.id" v-bind:created="project.created" v-bind:updated="project.updated" v-bind:description="project.description" v-bind:link="project.link" v-bind:private="project.private" :override="project.override"></projectc>
         <i v-if="this.loaded==false" class="fa fa-spinner fa-spin"></i>
         <span v-if="this.loaded == true && this.projects.length == 0">User has no projects</span>
 
@@ -266,7 +266,19 @@ let userC = {
             this.projects[index].private = data.private;
         },
 
-        updateDelete: function(index) {
+        deleteProject: function(index) {
+            project = this.projects[index];
+            // Remove client-side all posts with project
+            lengde = this.posts.length
+            for (let i = lengde-1; i >= 0; i--) {
+                console.log(i);
+                console.log(this.posts);
+                if (this.posts[i].projectid == project.id) {
+                    console.log("DELETE");
+                    this.posts.splice(i,1);
+                }
+            }
+
             this.projects.splice(index, 1)
         },
 
@@ -323,6 +335,20 @@ let userC = {
             }
 
             this.editable = (this.pageuserid==this.loggedInUser.userid)
+        },
+        deleteUser: async function(){
+            if (confirm("Deleting a user is irreversible. All your data will be gone.\n Are you sure?")){
+                
+                let response = await fetch("/api/user/" + this.loggedInUser.userid, {
+                method: "DELETE"
+                });
+
+                if (response.status == 200){
+                    let result = await response.json();
+                    alert(result)
+                    console.log(result);
+                }   
+            }
         },
     }  
 };
