@@ -16,24 +16,25 @@ let projectformC = {
             link: {default: ""}, 
             private: {default: false},
     },
-    template: /*html*/ ` 
-    <p v-if="errors.length">
-            <b>Please correct the following error(s):</b>
-            <ul>
-            <li v-for="error in errors">{{ error }}</li>
-            </ul>
-        </p>
+    template: /*html*/ `
+    <div style="border: solid 2px black; width: 50%">
+        <p v-if="errors.length">
+                <b>Please correct the following error(s):</b>
+                <ul>
+                <li v-for="error in errors">{{ error }}</li>
+                </ul>
+            </p>
 
-        <h2>Project form</h2>
-        <form action="javascript:void(0);">
-            <label>Name: </label> <br> <input type="text" name="name" v-model="registerModel.name" /><br/>
-            <label>Created:</label> <br> <input type="date" name="password" v-model="registerModel.created"><br/>
-            <label>Description:</label> <br> <textarea name="description" v-model="registerModel.description" maxlength="250"></textarea><br/>
-            <label>Source code:</label> <br> <input type="text" name="link" v-model="registerModel.link"><br/>
-            <button v-if="this.id==null" v-on:click="this.register"> Register </button>
-            <button v-else v-on:click="this.edit"> edit </button>
-        </form>
-        
+            <h2>Project form</h2>
+            <form action="javascript:void(0);">
+                <label>Name: </label> <br> <input type="text" name="name" v-model="registerModel.name" /><br/>
+                <label>Created:</label> <br> <input type="date" name="password" v-model="registerModel.created"><br/>
+                <label>Description:</label> <br> <textarea name="description" v-model="registerModel.description" maxlength="250"></textarea><br/>
+                <label>Source code:</label> <br> <input type="text" name="link" v-model="registerModel.link"><br/>
+                <button v-if="this.id==null" v-on:click="this.register"> Register </button>
+                <button v-else v-on:click="this.edit"> edit </button>
+            </form>
+    </div>
     `,
 
     data: function() { 
@@ -95,99 +96,77 @@ let projectformC = {
 
 let postformC = {
     emits: {
-        submit: (registerModel) => {
+        newpost: (postModel) => {
             return true
         },
     },
     props: {
             id: {default: null},
-            userid: {default: null},
+            userid: {required: true},
             text: {default: ""}, 
             type: {default: "updated"},  
-            projectid: {default: false},
+            projectid: {default: null},
+            projects: {},
     },
     template: /*html*/ ` 
-    <p v-if="errors.length">
+    <div class="framed" style="width: 50%;">
+        <p v-if="errors.length">
             <b>Please correct the following error(s):</b>
             <ul>
             <li v-for="error in errors">{{ error }}</li>
             </ul>
         </p>
 
-        <h2>Project form</h2>
+        <h2>Create a new post:</h2>
         <form action="javascript:void(0);">
-            <label>Name: </label> <br> <input type="text" name="name" v-model="registerModel.name" /><br/>
-            <label>Created:</label> <br> <input type="date" name="password" v-model="registerModel.created"><br/>
-            <label>Description:</label> <br> <textarea name="description" v-model="registerModel.description" maxlength="250"></textarea><br/>
-            <label>Source code:</label> <br> <input type="text" name="link" v-model="registerModel.link"><br/>
-            <button v-if="this.id==null" v-on:click="this.register"> Register </button>
-            <button v-else v-on:click="this.edit"> edit </button>
+            <label for="project">Choose a Project:</label>
+
+            <select name="project" v-model="postModel.projectid">
+                <option v-for="project in this.projects" :value="project.id"> {{ project.name }} </option>
+            </select>
+            <br>
+            <label>Text:</label> <br> <textarea name="text" v-model="postModel.text" maxlength="250"></textarea><br/>
+            <button v-on:click="this.post"> Post </button>
         </form>
-        
+    </div>
     `,
 
     data: function() { 
         return {
-            registerModel: {name: this.name, created: this.created, description: this.description, sourceCode: this.sourceCode},
+            postModel: {id: this.id, projectid: this.projectid, text: this.text, userid: this.userid, type: this.type},
             errors: [],
         }
       },
 
     methods: {
-        register: async function(){
-            if(this.registerModel.link == null){
-                this.registerModel.link == "";
-            }
-            let response = await fetch("/api/"+ this.userid + "/projects", {
+        post: async function() {
+            let response = await fetch("/api/"+ this.userid + "/posts", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded",
                 },
-                body: "name=" + this.registerModel.name + "&created=" + this.registerModel.created + "&description=" + this.registerModel.description + "&link=" + this.registerModel.link
+                body: "projectid=" + this.postModel.projectid + "&type=" + this.postModel.type + "&text=" + this.postModel.text
             });
             if (response.status == 200){
                 let result = await response.json();
-                this.errors = result.errors;
-                if (this.errors.length == 0) {
-                    this.registerModel.id = result.projectid;
-                    this.$emit('newProject', this.registerModel);
-                }
-                
-                /*if (this.errors.length == 0){
-                    this.$router.push('/user/' + state.user.username);
-                }*/
-            }
-            
-        },
-        edit: async function(){
-            let response = await fetch("/api/project/" + this.id, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded",
-                },
-                body: "id=" + this.id + "&name=" + this.registerModel.name + "&created=" + this.registerModel.created + "&description=" + this.registerModel.description + "&link=" + this.registerModel.link
-            });
-            if (response.status == 200){
-                let result = await response.json();
-                this.errors = result.errors;
-                if (this.id != null){
-                    this.$emit('submit', this.registerModel);
-                }
-                
-                /*if (this.errors.length == 0){
-                    this.$router.push('/user/' + state.user.username);
-                }*/
+                this.postModel.id = result;
+                this.$emit('newpost', this.postModel);
+
+                // this.errors = result.errors;
+                // if (this.errors.length == 0) {
+                //     this.registerModel.id = result.projectid;
+                //     this.$emit('newProject', this.registerModel);
+                // }
             }
         }
     }    
 };
 
-
 let loginformC = {
     template: /*html*/`
         <navbar></navbar>
         <div id="main">
-            <h1>HOME PAGE</h1>
+            <h1>Login Page</h1>
 
             <p v-if="errors.length">
                 <b>Please correct the following error(s):</b>

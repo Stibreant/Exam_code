@@ -36,6 +36,7 @@ def get_db():
     db = getattr(g, '_database', None)
     if db is None:
         db = g._database = sqlite3.connect(DATABASE)
+        db.execute("PRAGMA foreign_keys = ON")
     db.row_factory = sqlite3.Row
     return db
 
@@ -76,7 +77,7 @@ def users():
 
     if request.method == "POST":
         
-        username = request.form.get("username","").strip()
+        username = request.form.get("username","").strip().lower()
         password = request.form.get("password","")
         bio = request.form.get("bio","").strip()
         github = request.form.get("github","")
@@ -97,11 +98,14 @@ def users():
                     update_insert(repos, userid)
     
     if request.method == "GET":
-        users = []
-        query = query_db("SELECT username from users", get_db())
+        usernames = []
+        userids = []
+        query = query_db("SELECT username, id from users", get_db())
         for user in query:
-            users.append(user[0])
-        response["result"] = users
+            usernames.append(user[0])
+            userids.append(user[1])
+        response["usernames"] = usernames
+        response["userids"] = userids
     
     response["errors"] = errors
     return json.dumps(response)
@@ -141,7 +145,7 @@ def userid(username):
     userid = query_db("Select id from users where username=?;", get_db(), username.lower(), one=True)
     if userid==None:
         print(f"/api/userid/<username>: Could not find Userid {username}")
-        return json.dumps(f"Could not find user")
+        return json.dumps(userid)
     return json.dumps(userid[0])
 
 
@@ -149,19 +153,20 @@ def userid(username):
 def login_toindex():
     response = {}
     if request.method == "POST":
-        if session.get("username") == None:
+        if session.get("userid") == None:
 
             errors = validate_input(request.form["username"], request.form["password"])
             
             if len(errors) == 0:
-                user = query_db("SELECT username FROM users WHERE username=?", get_db(), request.form["username"])
+                user = query_db("SELECT id FROM users WHERE username=?", get_db(), request.form["username"], one=True)
                 
-                if len(user) == 0: # Could not find user
+
+                if user == None: # Could not find user
                     errors.append("Incorrect username or password")
 
                 else:
                     if check_password(request.form["username"], request.form["password"]):
-                        session["username"] = user[0][0]
+                        session["userid"] = user[0]
                     else:
                         errors.append("Incorrect username or password")
         else:
@@ -169,26 +174,26 @@ def login_toindex():
 
     if request.method == "GET":
         user = dict()
-        username = session.get("username")
-        if username == None:
+        userid = session.get("userid")
+        if userid == None:
             user["username"] = ""
             user["userid"] = ""
             return json.dumps(user)
         
-        userid = query_db("Select id from users where username=?;", get_db(), username.lower(), one=True)
-        user["userid"] = userid[0]
-        user["username"] = username
+        username = query_db("Select username from users where id=?;", get_db(), userid, one=True)
+        user["userid"] = userid
+        user["username"] = username[0]
         return json.dumps(user)
 
     if request.method == "DELETE":
-        session.pop("username")
+        session.pop("userid")
         return json.dumps("Sucsess")
                 
     response["errors"] = errors
     return json.dumps(response)
 
 """ /api/projects returns a json object with the projects. JS gets this so we can use AJAX """
-@app.route("/api/<userid>/projects", methods = ["GET", "POST", "DELETE"])
+@app.route("/api/<userid>/projects", methods = ["GET", "POST"])
 def serve(userid):
     if request.method == "GET":
         user = query_db("SELECT timestamp, github FROM users WHERE id = ?;", get_db(), userid, one=True)
@@ -225,20 +230,15 @@ def serve(userid):
         return json.dumps(result)
 
     if request.method == "POST":
-        session_userid = query_db("SELECT id FROM users WHERE username = ?;", get_db(), session.get("username"), one=True)
-        errors = []
+        session_userid = session.get("userid")
         response = {}
-        if session_userid == None:
-            session_userid = [None]
-            print(session_userid)
+        errors= []
         # TODO or user.role == Admin:
-        print(userid)
-        if str(session_userid[0]) == userid:
+        if str(session_userid) == userid:
             name = request.form["name"]
             created = request.form["created"]
             description = request.form["description"]
             link = request.form.get("link","").strip()
-            #userid = session["username"] 
             
             query_db("INSERT INTO Projects (userid, name, created, description, link) VALUES (?,?,?,?,?);", get_db(), userid, name, created, description, link)
             id = query_db("SELECT MAX(ID) FROM Projects", get_db(), one=True)[0]
@@ -252,10 +252,8 @@ def serve(userid):
 @app.route("/api/projects", methods = ["GET"])
 def feed():
     if request.method == "GET":
-        username = session.get("username")
-        if username != None:
-            userid = query_db("SELECT id FROM users WHERE username = ?;", get_db(), username, one=True)[0]
-            
+        userid = session.get("userid")
+        if userid != None:
             data = query_db("SELECT * FROM PROJECTS WHERE userid = ? ORDER BY updated DESC;", get_db(), int(userid))
         else: 
             data = query_db("SELECT * FROM PROJECTS  ORDER BY created DESC;", get_db())
@@ -388,6 +386,41 @@ def following(userid):
 
         result["followers"] = followers
         return json.dumps(result)
+
+@app.route("/api/<userid>/posts", methods = ["GET", "POST"])
+def posts(userid):
+    if request.method == "GET":
+        posts = []
+        rows = query_db("SELECT * FROM posts WHERE userid = ?", get_db(), userid)
+
+        for i, post in enumerate(rows):
+            posts.append(dict())
+            posts[i]["id"] = post[0]
+            posts[i]["type"] = post[1]
+            posts[i]["text"] = post[2]
+            posts[i]["userid"] = post[3]
+            posts[i]["projectid"] = post[4]
+
+        print(posts)
+        return json.dumps(posts)
+
+    if request.method == "POST":
+        projectid = request.form.get("projectid").strip()
+        type = request.form.get("type").strip()
+        text = request.form.get("text","").strip()
+
+        query_db("INSERT INTO posts (type, text, userid, projectid) VALUES (?, ?, ?, ?);", get_db(), type, text, userid, projectid)
+        id = query_db("SELECT MAX(ID) FROM posts", get_db(), one=True)[0]
+
+        return json.dumps(id)
+
+@app.route("/api/post/<postid>", methods = ["DELETE"])
+def post(postid):
+    if request.method == "DELETE":
+        # TODO VALIDATE USER
+        query_db("DELETE FROM posts WHERE id = ?;", get_db(), postid, one=True)
+        return json.dumps("Deleted")
+
 
 def update_timestamp(userid):
     query_db("UPDATE users SET timestamp=datetime('now', 'localtime') WHERE id=?", get_db(), userid)

@@ -29,15 +29,15 @@ CREATE TABLE projects(
     link TEXT,
     private BOOLEAN,
     override BOOLEAN,
-    FOREIGN KEY(userid) REFERENCES users(id)
+    FOREIGN KEY(userid) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE follows(
     userid INTEGER,
     followerid INTEGER,
     PRIMARY KEY (followerid, userid)
-    FOREIGN KEY(followerid) REFERENCES users(id)
-    FOREIGN KEY(userid) REFERENCES users(id)
+    FOREIGN KEY(followerid) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY(userid) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE posts(
@@ -46,6 +46,6 @@ CREATE TABLE posts(
     text VARCHAR(250),
     userid INTEGER,
     projectid INTEGER,
-    FOREIGN KEY(userid) REFERENCES users(id)
-    FOREIGN KEY(projectid) REFERENCES projects(id)
+    FOREIGN KEY(userid) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY(projectid) REFERENCES projects(id) ON DELETE CASCADE
 );

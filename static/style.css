@@ -71,8 +71,12 @@ a {
 .framed #text{
   width: 90%;
   margin: auto;
+  position: relative;
 }
 
+.framed #text i{
+  position:absolute; right: 0px; top: 0px;
+}
 
 .fa {
     margin: 10px;

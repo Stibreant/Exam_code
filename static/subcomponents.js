@@ -48,29 +48,22 @@ let navbarC = {
 let postC = {
     props:{
         editable: {default: false},
-        id: {},
-        username: {},
-        text: {},
-        type: {},
-        projectid: {},
+        id: {required: true},
+        username: {default: ""},
+        text: {default: ""},
+        type: {default: ""},
+        index: {default: null},
+        projectid: {required: true},
     },
     template: /*html*/`
     <div class="framed"> 
         <div id="text">
-            <h2>{{ this.username }} {{this.type}} {{ this.projectname }}</h2> 
-            
+            <h2><a :href="'/#/user/' + this.username">{{ this.username }}</a> {{this.type}} {{ this.projectname }}</h2> 
+            <i v-if="this.editable==true" v-on:click="this.delete" class="fa fa-times-circle fa-2x"></i>
+
             {{ this.text }}
 
             <br>
-            <div v-if="this.editable==true">
-                <button v-on:click="$emit('edited', this.id, this.name, this.created, this.description, this.link, this.private, this.index)">EDIT</button>
-                <button v-on:click="this.delete">DELETE</button>
-
-                <label class="switch" style="float: right;">
-                    <input type="checkbox" checked>
-                    <span class="slider round"></span>
-                </label>
-            </div>
         </div>
     </div>
     `,
@@ -85,166 +78,183 @@ let postC = {
     methods: {
         get_data: async function() {
             let response = await fetch("/api/project/" + this.projectid);
-              if (response.status == 200){
-                  let result = await response.json();
-                  this.projectname = result.name;
-                  console.log(result);
-              }
+            if (response.status == 200){
+                let result = await response.json();
+                this.projectname = result.name;
+                //console.log(result);
+            }
         },
+        delete: async function() {
+            if (confirm("Are you sure you want to delete this?")){
+                let response = await fetch("/api/post/" + this.id, {
+                    method: "DELETE"
+                });
+                if (response.status == 200){
+                    let result = await response.json();
+                    this.$emit("deleted", this.index)
+                    console.log(result);
+                }
+            }
+        }
     },
 }
 
 let projectC = {
-emits: {
-    deleted: () => {
-        return true;
+    emits: {
+        deleted: () => {
+            return true;
+        },
+        edited: () => {
+            return true;
+        }
     },
-    edited: () => {
-        return true;
-    }
-},
-props: {
-    id: {required: true}, 
-    name: {required: true},
-    index: {}, 
-    username: {},
-    created: {}, 
-    updated: {}, 
-    description: {}, 
-    link: {}, 
-    private: {},
-    editable: {},
-    displayusername: {}
-},
-template: /*html*/`
-    <div class="framed"> 
-        <div id="text">
-            <h2>{{ this.name }}</h2> 
-            {{ this.description }}
-            <br>
-            <br>
-            <span v-if="this.link!=null&&this.link!='None'"> <br> Source code: <a v-bind:href="this.link"> {{ this.link }} </a></span>
-            <br>
-            <br>
-            <div>
-                <span>
-                    Project started:
-                    <span style="float: right;">
-                        Last updated:
-                        <br>
-                        {{ this.updated }}
-                    </span>
-                    <br>
-                    {{ this.created }}
-                </span>
-
+    props: {
+        id: {required: true}, 
+        name: {required: true},
+        index: {}, 
+        username: {},
+        created: {}, 
+        updated: {}, 
+        description: {}, 
+        link: {}, 
+        private: {},
+        editable: {},
+        displayusername: {},
+        overridet: {},
+    },
+    template: /*html*/`
+        <div class="framed"> 
+            <div id="text">
+                <i v-if="this.editable==true" v-on:click="this.delete" class="fa fa-times-circle fa-2x"></i>
+                <h2>{{ this.name }}</h2> 
+                {{ this.description }}
                 <br>
-                <div v-if="this.editable==true">
-                    <button v-on:click="$emit('edited', this.id, this.name, this.created, this.description, this.link, this.private, this.index)">EDIT</button>
-                    <button v-on:click="this.delete">DELETE</button>
+                <br>
+                <span v-if="this.link!=''"> 
+                    <br> Source code: 
+                    <a v-bind:href="this.link"> {{ this.link }} </a>
+                </span>
+                <br>
+                <br>
+                <div>
+                    <span>
+                        Project started:
+                        <span style="float: right;">
+                            Last updated:
+                            <br>
+                            {{ this.updated }}
+                        </span>
+                        <br>
+                        {{ this.created }}
+                    </span>
 
-                    <label class="switch" style="float: right;">
-                        <input type="checkbox" checked>
-                        <span class="slider round"></span>
-                    </label>
-                </div>
+                    <br>
+                    <div v-if="this.editable==true">
+                        <button v-on:click="$emit('edited', this.id, this.name, this.created, this.description, this.link, this.private, this.index)">EDIT</button>
+                        <button v-on:click="this.delete">DELETE</button>
 
-                
+                        <label class="switch" style="float: right;">
+                            <input type="checkbox" @click="this.checkbox" v-model="this.override">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
 
-                <div v-if="this.displayusername==true">
-                    Created by user: {{ this.username }}
+                    
+
+                    <div v-if="this.displayusername==true">
+                        Created by user: {{ this.username }}
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-`,
-data: function () {
-    return {
-      
-    }
-  },
-
-methods: {
-    delete: async function() {
-        if (confirm("Are you sure you want to delete this?")){
-            let response = await fetch("/api/project/" + this.id, {
-                method: "DELETE"
-            });
-              if (response.status == 200){
-                  let result = await response.json();
-                  this.$emit("deleted", this.index);
-                  console.log(result);
-              }
+    `,
+    data: function () {
+        return {
+            override: this.overridet,
         }
-        
+    },
 
+    methods: {
+        delete: async function() {
+            if (confirm("Are you sure you want to delete this?")){
+                let response = await fetch("/api/project/" + this.id, {
+                    method: "DELETE"
+                });
+                if (response.status == 200){
+                    let result = await response.json();
+                    this.$emit("deleted", this.index);
+                    console.log(result);
+                }
+            }
+        },
+        checkbox: function(){
+            console.log(!this.override)
+        }
     }
-}
 };
 
 let searchC = {
-template: /*html*/`
-<div>
-    <input type="text" autocomplete="off" v-model="this.search" style ="margin-top: 20px;" @input="this.filter()" @focus="this.focus" @focusout="this.focusout" id="search" placeholder="search">
-    <select id="select">
-        <option>Users</option>
-        <option>Projects</option>
-    </select>
+    props: {
+        data: {default: []},
+    },
+    template: /*html*/`
+        <div>
+            <input type="text" autocomplete="off" v-model="this.search" style ="margin-top: 20px;" @input="this.filter()" @focus="this.focus" @focusout="this.focusout" id="search" placeholder="search">
+            <select id="select">
+                <option>Users</option>
+                <option>Projects</option>
+            </select>
 
-    <div v-if="this.show==true" id="searchlist">
-        <div v-for="element, i in this.data">
-        <a  :href="'/#/user/' + element">{{ element }}</a>
-        <br>
+            <div v-if="this.show==true" id="searchlist">
+                <div v-for="element, i in this.data">
+                <a  :href="'/#/user/' + element">{{ element }}</a>
+                <br>
+                </div>
+                
+            </div>
         </div>
-        
-    </div>
-</div>
-
-
-`,
-data: function () {
-    return {
-      data: [],
-      search: "",
-      show: true,
-    }
-  },
-
-methods: {
-    focus: async function() {
-        //console.log("Focus");
-        this.show=true;
-        if (this.data.length == 0) {
-            let response = await fetch("/api/users");
-            if (response.status == 200){    
-                let result = await response.json();
-                this.data = result.result;
-                //console.log(this.data);
-          }
+    `,
+    data: function () {
+        return {
+        search: "",
+        show: false,
         }
     },
-    focusout: async function() {
-        await new Promise((res) => setTimeout(res, 250));
-        this.show=false;
-    },
-    filter: function() {
-        var input, filter, table, i, txtValue, elements;
-        input = this.search;
-        filter = input.toUpperCase();
-        table = document.getElementById("searchlist");
-        elements = Array.from(table.children);
-        console.log(table)
 
-        // Loop through all elements, and hide those who don't match the search query
-        for (i = 0; i < elements.length; i++) {
-            
-            // Loop through the searchable values, if the element should be displayed break the loop and show element. If no text match hide it
-            if (this.data[i].toUpperCase().indexOf(filter) > -1) {
-                elements[i].style.display = "";
-            } else {
-                elements[i].style.display = "none";
+    methods: {
+        focus: async function() {
+            this.show=true;
+            if (this.data.length == 0) {
+                let response = await fetch("/api/users");
+                if (response.status == 200){    
+                    let result = await response.json();
+                    this.data = result.usernames;
+                    //console.log(this.data);
+            }
+            }
+        },
+        focusout: async function() {
+            await new Promise((res) => setTimeout(res, 250));
+            this.show=false;
+        },
+        filter: function() {
+            var input, filter, table, i, txtValue, elements;
+            input = this.search;
+            filter = input.toUpperCase();
+            table = document.getElementById("searchlist");
+            elements = Array.from(table.children);
+            console.log(table)
+
+            // Loop through all elements, and hide those who don't match the search query
+            for (i = 0; i < elements.length; i++) {
+                
+                // Loop through the searchable values, if the element should be displayed break the loop and show element. If no text match hide it
+                if (this.data[i].toUpperCase().indexOf(filter) > -1) {
+                    elements[i].style.display = "";
+                } else {
+                    elements[i].style.display = "none";
+                }
             }
         }
     }
-}
 };

@@ -13,24 +13,32 @@ let homeC = {
         <img src="/static/Pictures/Show the world.png" style="width: 100%;" alt="Banner image">
 
         <h1>Home page</h1>
-        <searchc></searchc>
+        <searchc v-bind:data="this.usernames"></searchc>
         <br>
 
         <div v-for="project in this.projects">
             <projectc v-bind:username="project.username" v-bind:displayusername="true" v-bind:name="project.name" v-bind:editable="false" v-bind:id="project.id" v-bind:created="project.created" v-bind:updated="project.updated" v-bind:description="project.description" v-bind:link="project.link" v-bind:private="project.private"></projectc>
         </div>
+        <postc v-for="post, i in this.posts" :index="i" :id="post.id" :projectid="post.projectid" :text="post.text" :type="post.type" :username="post.username"></postc>
     </div>
     `,
     data: function() { 
         return {
             projects: [],
+            posts: [],
             username: null,
             user: state.user,
             following: [],
+            usernames: [],
+            userids: [],
         }
     },
     created: function() {
         //this.get_data();
+    },
+    mounted: function() {
+        this.scroll();
+        this.get_users();
     },
     methods: {
         get_data: async function(){
@@ -56,31 +64,68 @@ let homeC = {
                 if (response.status == 200){
                     let result = await response.json();
                     this.following = result.followers
-                    this.get_following_projects()
+                    this.get_following_posts()
                 }
             }
         },
-        get_following_projects: async function() {
+        get_following_posts: async function() {
             for (let i = 0; i < this.following.length; i++) {
                 const element = this.following[i];
-                let response = await fetch("/api/" + element + "/projects");
+                let response = await fetch("/api/" + element + "/posts");
                 if (response.status == 200){
                     let result = await response.json();
                     
                     for (i in result) {
-                        this.projects.push(result[i]);
+                        this.posts.push(result[i]);
                         this.get_username(i);
                     }
                 }
             }
         },
-        get_username: async function(i) {
-            let response = await fetch("/api/user/"+ this.projects[i].userid);
+        get_users: async function() {
+            let response = await fetch("/api/users");
+                if (response.status == 200){    
+                    let result = await response.json();
+                    this.usernames = result.usernames;
+                    this.userids = result.userids;
+                    if (this.user.userid == ""){
+                        for (let i = 0; i < this.userids.length; i++) {
+                            const element = this.userids[i];
+                            users_posts = await this.get_posts(element);
+                            if (users_posts.length != 0){
+                                this.posts.push(...users_posts)
+                            }
+                        }
+                        for (i in this.posts){
+                            this.get_username(i)
+                        }
+                    }
+                }
+        },
+        get_posts: async function(userid){
+            let response = await fetch("/api/"+ userid + "/posts");
                 if (response.status == 200){
                     let result = await response.json();
-                    this.projects[i].username = result.username;
+                    return result;
                 }
-        }
+        },
+        get_username: async function(i) {
+            let response = await fetch("/api/user/"+ this.posts[i].userid);
+                if (response.status == 200){
+                    let result = await response.json();
+                    this.posts[i].username = result.username;
+                }
+        },
+        scroll () {
+            window.onscroll = () => {
+              let bottomOfWindow = Math.max(window.pageYOffset, document.documentElement.scrollTop, document.body.scrollTop) + window.innerHeight === document.documentElement.offsetHeight
+          
+              if (bottomOfWindow) {
+               this.scrolledToBottom = true // replace it with your code
+               console.log("Bottom")
+              }
+           }
+          },
     }
 }
 
@@ -89,8 +134,13 @@ let userC = {
     <navbar v-on:updatedstate="this.check_followed"></navbar> 
     <div id="main">
     <h1>Username {{ $route.params.id }}</h1>
+    
 
         <div class="framed" id="user">
+        
+            <!-- <figure><img src="" alt="Profile_picture"></figure> -->
+            <i class="fa fa-user-circle-o fa-5x" aria-hidden="true"></i>
+
             <div id="text">
                 <h2>Bio</h2>
                 <p>{{ this.bio }}</p>
@@ -98,36 +148,51 @@ let userC = {
                     <button v-if="this.followed == false"  v-on:click="this.updatefollow">FOLLOW</button>
                     <button v-else v-on:click="this.updatefollow">UNFOLLOW</button>
                 </div>
-
-                <figure><img src="" alt="Profile_picture"></figure>
+                
+                
+                
             </div>
-            
         </div>
 
         <br>
+        <h3>Posts:</h3> 
+        <i v-if="this.loggedInUser.username==$route.params.id" class="fa fa-plus-square fa-2x" aria-hidden="true" @click="this.showpostform = !this.showpostform"></i>
+        <postformc v-if="this.showpostform"  v-on:newpost="this.newPost" :projects="this.projects" :userid="this.loggedInUser.userid"></postformc>
+
+        <postc v-for="post, i in this.posts" v-on:deleted="this.deletePost" v-bind:editable="this.editable" :index="i" :id="post.id" :projectid="post.projectid" :text="post.text" :type="post.type" :username="$route.params.id"></postc>
+        <i v-if="this.loaded==false" class="fa fa-spinner fa-spin"></i>
+        <span v-if="this.loaded == true && this.posts.length == 0">User has yet to post</span>
+
+        <br>
         
-        
-        <projectc v-for="project, i in this.projects" v-on:deleted="this.updateDelete" v-on:edited="this.edit" v-bind:index="i" v-bind:editable="true" v-bind:name="project.name" v-bind:id="project.id" v-bind:created="project.created" v-bind:updated="project.updated" v-bind:description="project.description" v-bind:link="project.link" v-bind:private="project.private"></projectc>
-        
+        <h3>Projects:</h3> 
+        <i v-if="this.loggedInUser.username==$route.params.id" class="fa fa-plus-square fa-2x" aria-hidden="true" @click="this.showprojectform = !this.showprojectform"></i>
+        <projectformc v-if="this.showprojectform" v-on:newProject="this.newProject" :userid="this.loggedInUser.userid"></projectformc>
+
+        <projectc v-for="project, i in this.projects" v-on:deleted="this.updateDelete" v-on:edited="this.edit" v-bind:index="i" v-bind:editable="this.editable" v-bind:name="project.name" v-bind:id="project.id" v-bind:created="project.created" v-bind:updated="project.updated" v-bind:description="project.description" v-bind:link="project.link" v-bind:private="project.private" :override="project.override"></projectc>
+        <i v-if="this.loaded==false" class="fa fa-spinner fa-spin"></i>
+        <span v-if="this.loaded == true && this.projects.length == 0">User has no projects</span>
 
         <div v-if="this.showedit">
             <projectformc v-on:submit="this.updateEdit" v-bind:id="this.editinfo.id" v-bind:name="this.editinfo.name" v-bind:created="this.editinfo.created"  v-bind:description="this.editinfo.description" v-bind:link="this.editinfo.link" v-bind:private="this.editinfo.private"></projectformc>
         </div>
-
-        <projectformc v-on:newProject="this.newProject" :userid="this.loggedInUser.userid"></projectformc>
-        <postc :projectid="1"></postc>
+        <br>
     </div>
     `,
     data: function() { 
         return {
             pageuserid: null,
             followed: false,
+            editable: false,
             projects: [],
             posts: [],
             loggedInUser: state.user,
             bio: "",
             showedit: false,
-            editinfo: {id: "",name: "", created: "", description: "", link: "", private: "", index: -1}
+            showpostform: false,
+            showprojectform: false,
+            editinfo: {id: "",name: "", created: "", description: "", link: "", private: "", index: -1},
+            loaded: false,
         }
     },
     created: async function() {
@@ -136,7 +201,8 @@ let userC = {
         // GET pageuserid
         let response2 = await fetch("/api/userid/" + this.$route.params.id);
         if (response2.status == 200){
-            this.pageuserid = await response2.json();
+            result = await response2.json();
+            this.pageuserid = result;
         }
 
         if (this.loggedInUser.userid != ""){
@@ -145,10 +211,15 @@ let userC = {
         
     },
     methods: {
-        get_data: async function(){
+        get_data: async function() {
             let response2 = await fetch("/api/userid/" + this.$route.params.id);
             if (response2.status == 200){
-                this.pageuserid = await response2.json();
+                result = await response2.json();
+                if (result == null) {  
+                    this.$router.push("/")
+                    alert("User " + this.$route.params.id +  " does not exist")
+                }
+                this.pageuserid = result;
             }
 
             // Get projects of user with user id
@@ -157,6 +228,15 @@ let userC = {
                 let result = await response.json();
                 this.projects = result;
             }
+
+            // Get posts of user
+            let response3 = await fetch("/api/"+ this.pageuserid + "/posts");
+            if (response3.status == 200){
+                let result = await response3.json();
+                this.posts = result;
+            }
+
+            this.loaded = true;
 
             // Get userinfo from userid
             let response1 = await fetch("/api/user/" + this.pageuserid);
@@ -191,19 +271,18 @@ let userC = {
         },
 
         newProject: function(data) {
-            console.log(this.projects);
-            let newProject = {};
-
             // Updating client-side data
-            newProject.id = data.id;
-            newProject.name = data.name;
-            newProject.created = data.created;
-            newProject.description = data.description;
-            newProject.link = data.link;
-            newProject.private = data.private;
-            this.projects.push(newProject)
+            let copy = JSON.parse(JSON.stringify(data));
+            this.projects.push(copy)
         },
-
+        newPost: function(newpost) {
+            let copy = JSON.parse(JSON.stringify(newpost));
+            this.posts.push(copy)
+            console.log(this.posts)
+        },
+        deletePost: function(index) {
+            this.posts.splice(index, 1)
+        },
         updatefollow: async function() {
             console.log(state.user.userid)
             if (this.followed == false){
@@ -242,7 +321,8 @@ let userC = {
                     this.followed = result;
                 }
             }
-            
+
+            this.editable = (this.pageuserid==this.loggedInUser.userid)
         },
     }  
 };

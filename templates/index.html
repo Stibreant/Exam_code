@@ -15,7 +15,10 @@
     <script src="{{ url_for('static', filename='components.js') }}"></script>
     <script src="{{ url_for('static', filename='formcomponents.js') }}"></script>
     <script src="{{ url_for('static', filename='router.js') }}"></script>
-    
+
+    <!-- font awesome -->
+    <script src="https://use.fontawesome.com/b9e930eba0.js"></script>
+
     <title>Page</title>
 
     <!-- STIANS-->
@@ -29,7 +32,6 @@
 
 </head>
 <body>
-
 <!--
     <label class="switch">
             <input type="checkbox">
@@ -55,6 +57,7 @@
     app.component('projectformc', projectformC);
     app.component('searchc', searchC);
     app.component('postc', postC);
+    app.component('postformc', postformC);
     app.mount('#app');
 </script>
 
