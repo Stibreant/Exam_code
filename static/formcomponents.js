@@ -170,7 +170,7 @@ let loginformC = {
     template: /*html*/`
         <navbar></navbar>
         <div id="main">
-            <h1>Login Page</h1>
+            <h1>Login</h1>
 
             <p v-if="errors.length">
                 <b>Please correct the following error(s):</b>
@@ -179,7 +179,6 @@ let loginformC = {
                 </ul>
             </p>
 
-            <h2>Login form</h2>
             <form action="javascript:void(0);" v-bind:onsubmit="this.login">
                 <label>Username: <input type="text" name="username" v-model="loginModel.username" /></label><br />
                 <label>Password: <input type="password" name="password" v-model="loginModel.password"></label><br />
@@ -222,16 +221,16 @@ let registerC = {
     template: /*html*/`
         <navbar></navbar>
         <div id="main">
-            <h1>Register</h1>
+            <h1>Start showing off your expertise today!</h1>
+            <h2>Set up your new account</h2>
 
             <p v-if="errors.length">
-                <b>Please correct the following error(s):</b>
+                <b>Please correct the following error<b v-if="errors.length>1">s</b>:</b>
                 <ul>
                 <li v-for="error in errors">{{ error }}</li>
                 </ul>
             </p>
 
-            <h2>Registration form</h2>
             <form action="javascript:void(0);" v-bind:onsubmit="this.register">
                 <label>Username: </label> <br> <input type="text" name="username" v-model="registerModel.username" /><br/>
                 <label>Password:</label> <br> <input type="password" name="password" v-model="registerModel.password"><br/>

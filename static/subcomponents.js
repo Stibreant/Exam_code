@@ -54,11 +54,13 @@ let postC = {
         type: {default: ""},
         index: {default: null},
         projectid: {required: true},
+        date: {required: true},
     },
     template: /*html*/`
     <div class="framed"> 
         <div id="text">
-            <h2><a :href="'/#/user/' + this.username">{{ this.username }}</a> {{this.type}} {{ this.projectname }}</h2> 
+            <h2><a :href="'/#/user/' + this.username">@{{ this.username }}</a> {{this.type}} {{ this.projectname }}</h2> 
+            <p> {{this.date}} </p>
             <i v-if="this.editable==true" v-on:click="this.delete" class="fa fa-times-circle fa-2x"></i>
 
             {{ this.text }}
@@ -198,13 +200,9 @@ let searchC = {
     },
     template: /*html*/`
         <div>
-            <input type="text" autocomplete="off" v-model="this.search" style ="margin-top: 20px;" @input="this.filter()" @focus="this.focus" @focusout="this.focusout" id="search" placeholder="search">
-            <select id="select">
-                <option>Users</option>
-                <option>Projects</option>
-            </select>
+            <input type="text" autocomplete="off" v-model="this.search" @input="this.filter()" @focus="this.focus" @focusout="this.focusout" id="search" placeholder="search for users">
 
-            <div v-if="this.show==true" id="searchlist">
+            <div v-if="this.show==true" id="searchlist" style="text-align: center; border: 1px solid white; width:100%; background-color: black;">
                 <div v-for="element, i in this.data">
                 <a  :href="'/#/user/' + element">{{ element }}</a>
                 <br>

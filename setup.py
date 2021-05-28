@@ -58,16 +58,21 @@ def db_update(username):
         return result_list
     return []
 
+# Find new repos from github and add them to the database
 def update_insert(repos, userid):
     oldIDs = query_db("SELECT githubid from projects where userid=?", get_db(), userid)
     if len(oldIDs) == 0:
         oldIDs = [[]]
     for repo in repos:
         if repo["githubid"] not in oldIDs[0]: 
+            
             sql = f"INSERT INTO projects (userid, githubid ,name, created, updated, description, website, link, private) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);"
             query_db(sql, get_db(), userid, repo["githubid"], repo["name"], repo["created"], repo["updated"], repo["description"] ,repo["website"] ,repo["link"],repo["private"])
+            
             id = query_db("SELECT MAX(ID) FROM Projects", get_db(), one=True)[0]
-            sql = f"INSERT INTO posts (type, text, userid, projectid) VALUES(?, ?, ?, ?);"
-            query_db(sql, get_db(),"created", None, userid, id)
+            
+            sql = f"INSERT INTO posts (type, text, userid, projectid, date) VALUES(?, ?, ?, ?, ?);"
+            query_db(sql, get_db(),"created a new project", None, userid, id, repo["created"])
+        
         else: # elif not repo["overwrite"]: update_project()
             print("Project already exists")

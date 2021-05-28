@@ -158,17 +158,17 @@ def login_toindex():
     if request.method == "POST":
         if session.get("userid") == None:
 
-            errors = validate_input(request.form["username"], request.form["password"])
+            errors = validate_input(request.form["username"].lower(), request.form["password"])
             
             if len(errors) == 0:
-                user = query_db("SELECT id FROM users WHERE username=?", get_db(), request.form["username"], one=True)
+                user = query_db("SELECT id FROM users WHERE username=?", get_db(), request.form["username"].lower(), one=True)
                 
 
                 if user == None: # Could not find user
                     errors.append("Incorrect username or password")
 
                 else:
-                    if check_password(request.form["username"], request.form["password"]):
+                    if check_password(request.form["username"].lower(), request.form["password"]):
                         session["userid"] = user[0]
                     else:
                         errors.append("Incorrect username or password")
@@ -403,6 +403,7 @@ def posts(userid):
             posts[i]["text"] = post[2]
             posts[i]["userid"] = post[3]
             posts[i]["projectid"] = post[4]
+            posts[i]["date"] = post[5]
 
         print(posts)
         return json.dumps(posts)
@@ -412,7 +413,7 @@ def posts(userid):
         type = request.form.get("type").strip()
         text = request.form.get("text","").strip()
 
-        query_db("INSERT INTO posts (type, text, userid, projectid) VALUES (?, ?, ?, ?);", get_db(), type, text, userid, projectid)
+        query_db("INSERT INTO posts (type, text, userid, projectid, date) VALUES (?, ?, ?, ?, datetime('now', 'localtime'));", get_db(), type, text, userid, projectid)
         id = query_db("SELECT MAX(ID) FROM posts", get_db(), one=True)[0]
 
         return json.dumps(id)

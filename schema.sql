@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS Projects;
+DROP TABLE IF EXISTS projects;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS follows;
 DROP TABLE IF EXISTS posts;
@@ -46,6 +46,7 @@ CREATE TABLE posts(
     text VARCHAR(250),
     userid INTEGER,
     projectid INTEGER,
+    date DATETIME,
     FOREIGN KEY(userid) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY(projectid) REFERENCES projects(id) ON DELETE CASCADE
 );

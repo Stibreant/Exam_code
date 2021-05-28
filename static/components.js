@@ -11,15 +11,22 @@ let homeC = {
     <navbar v-on:loggedout="this.get_data" v-on:updatedstate="this.get_following"></navbar>
     <div id=main>
         <img src="/static/Pictures/Show the world.png" style="width: 100%;" alt="Banner image">
-
-        <h1>Home page</h1>
-        <searchc v-bind:data="this.usernames"></searchc>
+        
+        <div style="width: 100%; position: relative;"> 
+            <h1>Home page</h1>
+            <div id="searchcontainer">
+                <searchc v-bind:data="this.usernames"></searchc>
+            </div>
+        </div>
+        
         <br>
 
         <div v-for="project in this.projects">
             <projectc v-bind:username="project.username" v-bind:displayusername="true" v-bind:name="project.name" v-bind:editable="false" v-bind:id="project.id" v-bind:created="project.created" v-bind:updated="project.updated" v-bind:description="project.description" v-bind:link="project.link" v-bind:private="project.private"></projectc>
         </div>
-        <postc v-for="post, i in this.posts" :index="i" :id="post.id" :projectid="post.projectid" :text="post.text" :type="post.type" :username="post.username"></postc>
+        <div id="postcontainer">
+            <postc v-for="post, i in this.posts" :date="post.date" :index="i" :id="post.id" :projectid="post.projectid" :text="post.text" :type="post.type" :username="post.username"></postc>
+        </div>
     </div>
     `,
     data: function() { 
@@ -159,7 +166,7 @@ let userC = {
         <i v-if="this.loggedInUser.username==$route.params.id" class="fa fa-plus-square fa-2x" aria-hidden="true" @click="this.showpostform = !this.showpostform"></i>
         <postformc v-if="this.showpostform"  v-on:newpost="this.newPost" :projects="this.projects" :userid="this.loggedInUser.userid"></postformc>
 
-        <postc v-for="post, i in this.posts" v-on:deleted="this.deletePost" v-bind:editable="this.editable" :index="i" :id="post.id" :projectid="post.projectid" :text="post.text" :type="post.type" :username="$route.params.id"></postc>
+        <postc v-for="post, i in this.posts" v-on:deleted="this.deletePost" v-bind:editable="this.editable" :index="i" :date="post.date" :id="post.id" :projectid="post.projectid" :text="post.text" :type="post.type" :username="$route.params.id"></postc>
         <i v-if="this.loaded==false" class="fa fa-spinner fa-spin"></i>
         <span v-if="this.loaded == true && this.posts.length == 0">User has yet to post</span>
 
@@ -269,17 +276,12 @@ let userC = {
         deleteProject: function(index) {
             project = this.projects[index];
             // Remove client-side all posts with project
-            lengde = this.posts.length
-            for (let i = lengde-1; i >= 0; i--) {
-                console.log(i);
-                console.log(this.posts);
+            for (let i = this.posts.length-1; i >= 0; i--) {
                 if (this.posts[i].projectid == project.id) {
-                    console.log("DELETE");
-                    this.posts.splice(i,1);
+                    this.posts.splice(i, 1);
                 }
             }
-
-            this.projects.splice(index, 1)
+            this.projects.splice(index, 1);
         },
 
         newProject: function(data) {
@@ -289,8 +291,17 @@ let userC = {
         },
         newPost: function(newpost) {
             let copy = JSON.parse(JSON.stringify(newpost));
+
+            var currentdate = new Date(); 
+            var datetime = currentdate.getFullYear() + "-"
+                + (currentdate.getMonth()+1)  + "-" 
+                + currentdate.getDate() + " "  
+                + currentdate.getHours() + ":"  
+                + currentdate.getMinutes() + ":" 
+                + currentdate.getSeconds();
+            copy.date = datetime
+            
             this.posts.push(copy)
-            console.log(this.posts)
         },
         deletePost: function(index) {
             this.posts.splice(index, 1)
