@@ -95,7 +95,7 @@ a {
   position: relative;
 }
 
-.framed #text i{
+.framed #text .buttoncontainer{
   position:absolute; right: 0px; top: 0px;
 }
 

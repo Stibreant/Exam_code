@@ -61,7 +61,7 @@ let postC = {
         <div id="text">
             <h2><a :href="'/#/user/' + this.username">@{{ this.username }}</a> {{this.type}} {{ this.projectname }}</h2> 
             <p> {{this.date}} </p>
-            <i v-if="this.editable==true" v-on:click="this.delete" class="fa fa-times-circle fa-2x"></i>
+            <i v-if="this.editable==true" v-on:click="this.delete" class="fa fa-times-circle fa-2x" class="buttoncontainer"></i>
 
             {{ this.text }}
 
@@ -99,6 +99,15 @@ let postC = {
             }
         }
     },
+    watch: {
+        projectid: async function(){
+            let response = await fetch("/api/project/" + this.projectid);
+            if (response.status == 200){
+                let result = await response.json();
+                this.projectname = result.name;
+            }
+        }
+    },
 }
 
 let projectC = {
@@ -127,7 +136,11 @@ let projectC = {
     template: /*html*/`
         <div class="framed"> 
             <div id="text">
-                <i v-if="this.editable==true" v-on:click="this.delete" class="fa fa-times-circle fa-2x"></i>
+                <div class="buttoncontainer" v-if="this.editable==true">
+                    <i v-on:click="$emit('edited', this.id, this.name, this.created, this.description, this.link, this.private, this.index)" class="fa fa-edit fa-2x"></i>
+                    <i  v-on:click="this.delete" class="fa fa-times-circle fa-2x"></i>
+                </div>
+
                 <h2>{{ this.name }}</h2> 
                 {{ this.description }}
                 <br>
@@ -151,16 +164,12 @@ let projectC = {
                     </span>
 
                     <br>
-                    <div v-if="this.editable==true">
-                        <button v-on:click="$emit('edited', this.id, this.name, this.created, this.description, this.link, this.private, this.index)">EDIT</button>                     
-
+                    <div v-if="this.editable==true">                  
                         <label class="switch" style="float: right;">
                             <input type="checkbox" @click="this.checkbox" v-model="this.override">
                             <span class="slider round"></span>
                         </label>
                     </div>
-
-                    
 
                     <div v-if="this.displayusername==true">
                         Created by user: {{ this.username }}

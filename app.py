@@ -42,16 +42,12 @@ def get_db():
 
 def check_password(username, password):
     """Checks if username-password combination is valid."""
-    # user password data typically would be stored in a database
-
     temp = query_db("SELECT passwordhash FROM users WHERE username=?", get_db(), username)
     if len(temp) != 0:
         hash = temp[0][0]
     else:
         return False
-
     return check_password_hash(hash, password)
-    
 
 def validate_input(username, password):
     """ Checks if a input if valid. Returns a list of errors, if any """
@@ -64,13 +60,19 @@ def validate_input(username, password):
 
     return errors
    
+def validate_session(test_userid):
+    userid = session.get("userid")
+    if str(userid) == str(test_userid):
+        return True
+    else:
+        return False
 
 @app.route("/")
 def index():
     return render_template("index.html")
 
 
-@app.route("/api/users", methods=["GET", "POST", "PUT", "DELETE"])
+@app.route("/api/users", methods=["GET", "POST"])
 def users():
     response = {}
     errors = []
@@ -111,7 +113,7 @@ def users():
     return json.dumps(response)
 
 
-@app.route("/api/user/<userid>", methods=["GET", "PUT", "DELETE"])
+@app.route("/api/user/<userid>", methods=["GET", "DELETE"])
 def user(userid):
     if request.method == "GET":
         try:
@@ -132,17 +134,15 @@ def user(userid):
         
     
     if request.method == "DELETE":
-        query_db("DELETE FROM users WHERE id=?", get_db(), userid)
-        session.pop("userid")
-        return json.dumps("User deleted")
-    else:
-        errors = "unsupported method"
-    
-    response = {}
-    response["errors"] = errors
-    return json.dumps(response)
+        if validate_session(userid):
+            query_db("DELETE FROM users WHERE id=?", get_db(), userid)
+            session.pop("userid")
+            return json.dumps("User deleted")
+        else:
+            return json.dumps("Permission denied")
 
-# Route converts username to userid.
+
+# Converts username to userid.
 @app.route("/api/userid/<username>", methods = ["GET"])
 def userid(username):
     userid = query_db("Select id from users where username=?;", get_db(), username.lower(), one=True)
@@ -233,11 +233,10 @@ def serve(userid):
         return json.dumps(result)
 
     if request.method == "POST":
-        session_userid = session.get("userid")
         response = {}
         errors= []
         # TODO or user.role == Admin:
-        if str(session_userid) == userid:
+        if validate_session(userid):
             name = request.form["name"]
             created = request.form["created"]
             description = request.form["description"]
@@ -278,11 +277,12 @@ def feed():
 
 @app.route("/api/project/<projectid>", methods = ["GET", "DELETE", "PUT"])
 def project(projectid):
+    errors = []
+    result = dict()
     if request.method == "GET":
         
         row = query_db("SELECT * FROM projects WHERE id = ?;", get_db(), projectid, one=True)
         
-        result = dict()
         result["id"] = row[0]
         result["userid"] = row[1]
         result["githubid"] = row[2]
@@ -294,65 +294,67 @@ def project(projectid):
         result["private"] = row[9]
 
         return json.dumps(result)
-
+    
+    row = query_db("SELECT * FROM projects WHERE id = ?;", get_db(), projectid, one=True)
     if request.method == "DELETE":
-        
-        row = query_db("SELECT * FROM projects WHERE id = ?;", get_db(), projectid, one=True)
-        query_db("DELETE FROM projects WHERE id = ?;", get_db(), projectid, one=True)
-        
-        result = dict()
-        result["id"] = row[0]
-        result["userid"] = row[1]
-        result["name"] = row[2]
-        result["created"] = row[3]
-        result["updated"] = row[4]
-        result["description"] = row[5]
-        result["link"] = row[7]
-        result["private"] = row[8]
-
+        if validate_session(row[1]):
+            query_db("DELETE FROM projects WHERE id = ?;", get_db(), projectid, one=True)
+            
+            result["id"] = row[0]
+            result["userid"] = row[1]
+            result["name"] = row[2]
+            result["created"] = row[3]
+            result["updated"] = row[4]
+            result["description"] = row[5]
+            result["link"] = row[7]
+            result["private"] = row[8]
+        else: 
+            result["errors"] = ["Permission denied"]
         return json.dumps(result)
 
     if request.method == "PUT":
-        errors = []
-
-        id = request.form.get("id").strip()
-        name = request.form.get("name","").strip()
-        created = request.form.get("created","").strip()
-        description = request.form.get("description","").strip()
-        link = request.form.get("link","").strip()
         
-        query_db("UPDATE projects SET name=?, created=?, description=?, link=? WHERE id = ?;", get_db(), name, created, description, link, id, one=True)
-        row = query_db("SELECT * FROM projects WHERE id = ?;", get_db(), projectid, one=True)
+        if validate_session(row[1]):
+            id = request.form.get("id").strip()
+            name = request.form.get("name","").strip()
+            created = request.form.get("created","").strip()
+            description = request.form.get("description","").strip()
+            link = request.form.get("link","").strip()
+            
+            query_db("UPDATE projects SET name=?, created=?, description=?, link=? WHERE id = ?;", get_db(), name, created, description, link, id, one=True)
+            row = query_db("SELECT * FROM projects WHERE id = ?;", get_db(), projectid, one=True)
 
-        project = dict()
-        project["id"] = row[0]
-        project["userid"] = row[1]
-        project["name"] = row[2]
-        project["created"] = row[3]
-        project["updated"] = row[4]
-        project["description"] = row[5]
-        project["link"] = row[7]
-        project["private"] = row[8]
+            project = dict()
+            project["id"] = row[0]
+            project["userid"] = row[1]
+            project["name"] = row[2]
+            project["created"] = row[3]
+            project["updated"] = row[4]
+            project["description"] = row[5]
+            project["link"] = row[7]
+            project["private"] = row[8]
 
-        result = dict()
-        result["errors"] = errors
-        result["project"] = project
+            result["errors"] = errors
+            result["project"] = project
+        else:
+            result["errors"] = ["Permission denied"]
         return json.dumps(result)
 
 # Route for updating followers
 @app.route("/api/followers/<userid>", methods = ["GET", "POST"])
 def followers(userid):
+    result = dict()
     if request.method == "POST":
-        result = dict()
-        
         followerid = request.form["followerid"]
-        query_db("INSERT INTO follows (userid, followerid) VALUES (?,?);", get_db(), userid, followerid)
-        
-        result["message"] = f"User: {followerid} now follows user: {userid}"
+        if validate_session(followerid):
+            query_db("INSERT INTO follows (userid, followerid) VALUES (?,?);", get_db(), userid, followerid)
+            
+            result["message"] = f"User: {followerid} now follows user: {userid}"
+        else: 
+            result["errors"] = ["Permission denied"]
         return json.dumps(result)
 
     if request.method == "GET":
-        result = dict()
         user_ids = query_db("SELECT followerid FROM follows WHERE userid=?", get_db(), userid)
 
         followers=[]
@@ -373,10 +375,13 @@ def follower(userid, followerid):
         return json.dumps(True)
     
     if request.method == "DELETE":
-        query_db("DELETE FROM follows WHERE userid=? AND followerid=?;", get_db(), userid, followerid, one=True)
+        if validate_session(followerid):
+            query_db("DELETE FROM follows WHERE userid=? AND followerid=?;", get_db(), userid, followerid, one=True)
+        else:
+            return json.dumps("Permission denied")
         return json.dumps(f"User: {followerid} stopped following user: {userid}")
 
-# Users that the user follows
+# return userids that the user follows
 @app.route("/api/following/<userid>", methods = ["GET"])
 def following(userid):
     if request.method == "GET":
@@ -409,21 +414,26 @@ def posts(userid):
         return json.dumps(posts)
 
     if request.method == "POST":
-        projectid = request.form.get("projectid").strip()
-        type = request.form.get("type").strip()
-        text = request.form.get("text","").strip()
+        if validate_session(userid):
+            projectid = request.form.get("projectid").strip()
+            type = request.form.get("type").strip()
+            text = request.form.get("text","").strip()
 
-        query_db("INSERT INTO posts (type, text, userid, projectid, date) VALUES (?, ?, ?, ?, datetime('now', 'localtime'));", get_db(), type, text, userid, projectid)
-        id = query_db("SELECT MAX(ID) FROM posts", get_db(), one=True)[0]
-
-        return json.dumps(id)
+            query_db("INSERT INTO posts (type, text, userid, projectid, date) VALUES (?, ?, ?, ?, datetime('now', 'localtime'));", get_db(), type, text, userid, projectid)
+            id = query_db("SELECT MAX(ID) FROM posts", get_db(), one=True)[0]
+            return json.dumps(id)
+        else: 
+            return json.dumps("Permission denied")
 
 @app.route("/api/post/<postid>", methods = ["DELETE"])
 def post(postid):
     if request.method == "DELETE":
-        # TODO VALIDATE USER
-        query_db("DELETE FROM posts WHERE id = ?;", get_db(), postid, one=True)
-        return json.dumps("Deleted")
+        userid = query_db("SELECT userid FROM posts WHERE id = ?;", get_db(), postid, one=True)
+        if validate_session(userid[0]):
+            query_db("DELETE FROM posts WHERE id = ?;", get_db(), postid, one=True)
+            return json.dumps("Deleted")
+        else:
+            return json.dumps("Permission denied")
 
 
 def update_timestamp(userid):
