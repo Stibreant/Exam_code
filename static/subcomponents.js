@@ -59,11 +59,12 @@ let postC = {
     template: /*html*/`
     <div class="framed"> 
         <div id="text">
-            <h2><a :href="'/#/user/' + this.username">@{{ this.username }}</a> {{this.type}} {{ this.projectname }}</h2> 
-            <p> {{this.date}} </p>
+            <h2 style="display: inline-block"><a :href="'/#/user/' + this.username">@{{ this.username }}</a> {{this.type}} {{ this.projectname }}</h2> 
+            <p style="display: inline-block; margin-left: 1em;color: rgb(150,155,160)"> {{this.date}} </p>
+           
             <i v-if="this.editable==true" v-on:click="this.delete" class="fa fa-times-circle fa-2x buttoncontainer"></i>
 
-            {{ this.text }}
+            <span style="display: block;">{{ this.text }}</span>
 
             <br>
         </div>
@@ -211,7 +212,7 @@ let searchC = {
         <div>
             <input type="text" autocomplete="off" v-model="this.search" @input="this.filter()" @focus="this.focus" @focusout="this.focusout" id="search" placeholder="search for users">
 
-            <div v-if="this.show==true" id="searchlist" style="text-align: center; border: 1px solid white; width:100%; background-color: black;">
+            <div v-if="this.show==true" id="searchlist" style="text-align: center; width:100%; background-color: black;">
                 <div v-for="element, i in this.data">
                 <a  :href="'/#/user/' + element">{{ element }}</a>
                 <br>

@@ -5,6 +5,8 @@ let state = {
     })
 };
 
+
+
 let homeC = {
     template: /*html*/ ` 
 
@@ -33,6 +35,8 @@ let homeC = {
         return {
             projects: [],
             posts: [],
+            followposts: [],
+            newposts: [],
             username: null,
             user: state.user,
             following: [],
@@ -46,7 +50,7 @@ let homeC = {
     mounted: function() {
         document.title = "Home";
         this.scroll();
-        this.get_users();
+        //this.get_users();
     },
     methods: {
         get_data: async function(){
@@ -75,6 +79,7 @@ let homeC = {
                     this.get_following_posts()
                 }
             }
+            this.get_users();
         },
         get_following_posts: async function() {
             for (let i = 0; i < this.following.length; i++) {
@@ -84,29 +89,70 @@ let homeC = {
                     let result = await response.json();
                     
                     for (i in result) {
-                        this.posts.push(result[i]);
-                        this.get_username(i);
+                        //this.posts.push(result[i]);
+                        this.followposts.push(result[i]);
+                        this.get_username(i, "followpost");
                     }
+                    console.log(this.followposts);
+                    //this.shuffle(this.posts)
                 }
             }
         },
+        shuffle: function(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        },
+        // Gets all users the user does not follow
         get_users: async function() {
             let response = await fetch("/api/users");
                 if (response.status == 200){    
                     let result = await response.json();
                     this.usernames = result.usernames;
                     this.userids = result.userids;
-                    if (this.user.userid == ""){
-                        for (let i = 0; i < this.userids.length; i++) {
-                            const element = this.userids[i];
+                    for (let i = 0; i < this.userids.length; i++) {
+                        const element = this.userids[i];
+                        //if not following the user, add posts his posts to new posts
+                        console.log(this.userids[i])
+                        console.log(this.user.userid)
+                        if (!this.following.includes(this.userids[i]) && this.userids[i] != this.user.userid){
+                            console.log("run")
                             users_posts = await this.get_posts(element);
                             if (users_posts.length != 0){
-                                this.posts.push(...users_posts)
+                                for (j in users_posts){
+                                    users_posts[j].username = this.usernames[i]
+                                }
+                                this.newposts.push(...users_posts)
                             }
                         }
-                        for (i in this.posts){
-                            this.get_username(i)
+                        
+                    }
+
+                    /// MERGE ///
+                    console.log(this.following);
+                    for (let i = 0; i < this.followposts.length; i++) {
+                        for (let j = 0; j < 10; j++) {
+                            if (i*10+j < this.followposts.length){
+                                this.posts.push(this.followposts[i*10+j]);
+                            }
+                            if (j==9){
+                                //this.posts.push(this.newposts[i]);
+                            }
+                            else {
+                                this.posts.push(...this.newposts.slice(i));
+                                //break;
+                            }               
                         }
+                        if (i*10+9> this.followposts.length){
+                            this.posts.push(...this.newposts.slice(i+1));
+                            break;
+                        } 
+                        
+                    }
+
+                    if (this.user.username== ""){
+                        this.posts = this.newposts
                     }
                 }
         },
@@ -117,12 +163,22 @@ let homeC = {
                     return result;
                 }
         },
-        get_username: async function(i) {
-            let response = await fetch("/api/user/"+ this.posts[i].userid);
+        get_username: async function(i, arrayname) {
+            if (arrayname=="newpost"){
+                let response = await fetch("/api/user/"+ this.posts[i].userid);
                 if (response.status == 200){
                     let result = await response.json();
                     this.posts[i].username = result.username;
                 }
+            }
+            if (arrayname=="followpost"){
+                let response = await fetch("/api/user/"+ this.followposts[i].userid);
+                if (response.status == 200){
+                    let result = await response.json();
+                    this.followposts[i].username = result.username;
+                }
+            }
+            
         },
         scroll () {
             window.onscroll = () => {

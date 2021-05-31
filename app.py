@@ -381,7 +381,7 @@ def follower(userid, followerid):
             return json.dumps("Permission denied")
         return json.dumps(f"User: {followerid} stopped following user: {userid}")
 
-# return userids that the user follows
+# Return userids that the user follows
 @app.route("/api/following/<userid>", methods = ["GET"])
 def following(userid):
     if request.method == "GET":

@@ -31,6 +31,7 @@ input, textarea, select {
   color: white;
   border-radius: 15px;
   text-align: center;
+  outline: none;
 }
 
 input {
@@ -41,8 +42,18 @@ input {
   margin-top: 0px;
   position: absolute;
   right: 0px;
-  top: 0px
+  top: 0px;
+  outline: none;
+  z-index: 99;
 }
+
+#searchlist {
+  border: 2px solid rgb(47,51,54);
+  margin-top: -2px;
+  border-radius: 5px;
+}
+
+
 
 .navbar{
     margin: 0px;
@@ -50,7 +61,7 @@ input {
 }
 
 .navbar, #footer {
-    background-color: rgb(47,51,54);
+    background-color: rgb(21,24,28);
     display: flex;
     justify-content: space-evenly;
     height: 2.8em;
@@ -96,7 +107,13 @@ a {
 }
 
 .framed #text .buttoncontainer{
-  position:absolute; right: 0px; top: 0px;
+  position:absolute; 
+  right: 0px; 
+  top: 0px;
+}
+
+.framed #text span{
+  width: 80%;
 }
 
 .fa {
