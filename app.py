@@ -376,7 +376,7 @@ def follower(userid, followerid):
         query_db("DELETE FROM follows WHERE userid=? AND followerid=?;", get_db(), userid, followerid, one=True)
         return json.dumps(f"User: {followerid} stopped following user: {userid}")
 
-# Users that the user follows
+# Return userids that the user follows
 @app.route("/api/following/<userid>", methods = ["GET"])
 def following(userid):
     if request.method == "GET":
