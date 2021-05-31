@@ -44,6 +44,7 @@ let homeC = {
         //this.get_data();
     },
     mounted: function() {
+        document.title = "Home";
         this.scroll();
         this.get_users();
     },
@@ -203,7 +204,7 @@ let userC = {
         }
     },
     created: async function() {
-        
+        document.title = "user: " + this.$route.params.id;
         this.get_data();
         // GET pageuserid
         let response2 = await fetch("/api/userid/" + this.$route.params.id);

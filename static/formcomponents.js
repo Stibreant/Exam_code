@@ -194,6 +194,9 @@ let loginformC = {
             errors: [],
         }
       },
+    created: function() {
+        document.title = "Login";
+    },
 
     methods: {
         login: async function(){
@@ -247,6 +250,9 @@ let registerC = {
             errors: [],
         }
       },
+    created: function() {
+        document.title = "Register";
+    },
 
     methods: {
         register: async function(){

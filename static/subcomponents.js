@@ -61,7 +61,7 @@ let postC = {
         <div id="text">
             <h2><a :href="'/#/user/' + this.username">@{{ this.username }}</a> {{this.type}} {{ this.projectname }}</h2> 
             <p> {{this.date}} </p>
-            <i v-if="this.editable==true" v-on:click="this.delete" class="fa fa-times-circle fa-2x" class="buttoncontainer"></i>
+            <i v-if="this.editable==true" v-on:click="this.delete" class="fa fa-times-circle fa-2x buttoncontainer"></i>
 
             {{ this.text }}
 
