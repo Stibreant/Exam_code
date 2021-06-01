@@ -17,18 +17,20 @@ let projectformC = {
             private: {default: false},
     },
     template: /*html*/ `
-    <div style="border: solid 2px black; width: 50%">
+    <div style="width: 50%; flex-direction: column;" class="framed">
         <p v-if="errors.length">
                 <b>Please correct the following error(s):</b>
                 <ul>
                 <li v-for="error in errors">{{ error }}</li>
                 </ul>
             </p>
-
-            <h2>Project form</h2>
+            
+            <h2 v-if="this.id==null" id="projectform">New project</h2>
+            <h2  v-else>Edit project</h2> 
+            <br/>
             <form action="javascript:void(0);">
                 <label>Name: </label> <br> <input type="text" name="name" v-model="registerModel.name" /><br/>
-                <label>Created:</label> <br> <input type="date" name="password" v-model="registerModel.created"><br/>
+                <label>Created:</label> <br> <input type="date" name="password" v-model="registerModel.created"><i class="fa fa-calendar"></i><br/>
                 <label>Description:</label> <br> <textarea name="description" v-model="registerModel.description" maxlength="250"></textarea><br/>
                 <label>Source code:</label> <br> <input type="text" name="link" v-model="registerModel.link"><br/>
                 <button v-if="this.id==null" v-on:click="this.register"> Register </button>
@@ -71,7 +73,6 @@ let projectformC = {
             
         },
         edit: async function(){
-
             let response = await fetch("/api/project/" + this.id, {
                 method: "PUT",
                 headers: {
@@ -90,8 +91,8 @@ let projectformC = {
                     this.$router.push('/user/' + state.user.username);
                 }*/
             }
-        }
-    }    
+        },
+    },
 };
 
 let postformC = {
@@ -109,7 +110,7 @@ let postformC = {
             projects: {},
     },
     template: /*html*/ ` 
-    <div class="framed" style="width: 50%;">
+    <div class="framed" style="width: 50%; flex-direction: column;">
         <p v-if="errors.length">
             <b>Please correct the following error(s):</b>
             <ul>
@@ -121,9 +122,12 @@ let postformC = {
         <form action="javascript:void(0);">
             <label for="project">Choose a Project:</label>
 
+            <div class="custom-select"> 
             <select name="project" v-model="postModel.projectid">
                 <option v-for="project in this.projects" :value="project.id"> {{ project.name }} </option>
             </select>
+            </div>
+            
             <br>
             <label>Text:</label> <br> <textarea name="text" v-model="postModel.text" maxlength="250"></textarea><br/>
             <button v-on:click="this.post"> Post </button>

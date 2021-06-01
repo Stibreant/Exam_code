@@ -27,6 +27,7 @@ let homeC = {
             <projectc v-bind:username="project.username" v-bind:displayusername="true" v-bind:name="project.name" v-bind:editable="false" v-bind:id="project.id" v-bind:created="project.created" v-bind:updated="project.updated" v-bind:description="project.description" v-bind:link="project.link" v-bind:private="project.private"></projectc>
         </div>
         <div id="postcontainer">
+            <i v-if="this.posts.length==0" class="fa fa-spinner fa-spin fa-2x"></i>
             <postc v-for="post, i in this.posts" :date="post.date" :index="i" :id="post.id" :projectid="post.projectid" :text="post.text" :type="post.type" :username="post.username"></postc>
         </div>
     </div>
@@ -93,16 +94,24 @@ let homeC = {
                         this.followposts.push(result[i]);
                         this.get_username(i, "followpost");
                     }
-                    console.log(this.followposts);
-                    //this.shuffle(this.posts)
                 }
             }
         },
-        shuffle: function(array) {
+        shuffle: function( a, b ) { 
+            
+            /*function(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [array[i], array[j]] = [array[j], array[i]];
+            }*/
+            
+            if ( a.date < b.date ){
+                return 1;
             }
+            if ( a.date > b.date ){
+                return -1;
+            }
+            return 0;
         },
         // Gets all users the user does not follow
         get_users: async function() {
@@ -129,26 +138,26 @@ let homeC = {
                         
                     }
 
+                    // Sort by posttime.
+                    this.newposts.sort( this.shuffle);
+                    this.followposts.sort( this.shuffle );
+
                     /// MERGE ///
-                    console.log(this.following);
+                    // Ten posts from following and 1 from newposts.
                     for (let i = 0; i < this.followposts.length; i++) {
                         for (let j = 0; j < 10; j++) {
                             if (i*10+j < this.followposts.length){
+                                console.log(i*10+j);
                                 this.posts.push(this.followposts[i*10+j]);
                             }
                             if (j==9){
-                                //this.posts.push(this.newposts[i]);
-                            }
-                            else {
-                                this.posts.push(...this.newposts.slice(i));
-                                //break;
-                            }               
+                                this.posts.push(this.newposts[i]);
+                            }     
                         }
                         if (i*10+9> this.followposts.length){
                             this.posts.push(...this.newposts.slice(i+1));
                             break;
                         } 
-                        
                     }
 
                     if (this.user.username== ""){
@@ -208,19 +217,19 @@ let userC = {
             <div id="text">
                 <h2>Bio</h2>
                 <p>{{ this.bio }}</p>
-                <div v-if="this.loggedInUser.username!='' && this.loggedInUser.username!=$route.params.id ">
+                <div v-if="this.loggedInUser.username!='' && this.loggedInUser.username!=$route.params.id.toLowerCase() ">
                     <button v-if="this.followed == false"  v-on:click="this.updatefollow">FOLLOW</button>
                     <button v-else v-on:click="this.updatefollow">UNFOLLOW</button>
                 </div>
                 
-                <button v-if="this.loggedInUser.username==$route.params.id" @click="this.deleteUser"> DELETE ACCOUNT </button>
+                <button v-if="this.loggedInUser.username==$route.params.id.toLowerCase()" @click="this.deleteUser"> DELETE ACCOUNT </button>
                 
             </div>
         </div>
 
         <br>
         <h3>Posts:</h3> 
-        <i v-if="this.loggedInUser.username==$route.params.id" class="fa fa-plus-square fa-2x" aria-hidden="true" @click="this.showpostform = !this.showpostform"></i>
+        <i v-if="this.loggedInUser.username==$route.params.id.toLowerCase()" class="fa fa-plus-square fa-2x" aria-hidden="true" @click="this.showpostform = !this.showpostform"></i>
         <postformc v-if="this.showpostform"  v-on:newpost="this.newPost" :projects="this.projects" :userid="this.loggedInUser.userid"></postformc>
 
         <postc v-for="post, i in this.posts" v-on:deleted="this.deletePost" v-bind:editable="this.editable" :index="i" :date="post.date" :id="post.id" :projectid="post.projectid" :text="post.text" :type="post.type" :username="$route.params.id"></postc>
@@ -230,7 +239,7 @@ let userC = {
         <br>
         
         <h3>Projects:</h3> 
-        <i v-if="this.loggedInUser.username==$route.params.id" class="fa fa-plus-square fa-2x" aria-hidden="true" @click="this.showprojectform = !this.showprojectform"></i>
+        <i v-if="this.loggedInUser.username==$route.params.id.toLowerCase()" class="fa fa-plus-square fa-2x" aria-hidden="true" @click="this.showprojectform = !this.showprojectform"></i>
         <projectformc v-if="this.showprojectform" v-on:newProject="this.newProject" :userid="this.loggedInUser.userid"></projectformc>
 
         <projectc v-for="project, i in this.projects" v-on:deleted="this.deleteProject" v-on:edited="this.edit" v-bind:index="i" v-bind:editable="this.editable" v-bind:name="project.name" v-bind:id="project.id" v-bind:created="project.created" v-bind:updated="project.updated" v-bind:description="project.description" v-bind:link="project.link" v-bind:private="project.private" :override="project.override"></projectc>
@@ -313,7 +322,6 @@ let userC = {
         edit: function(id, name, created, description, link, private, index) {
             this.showedit = !this.showedit;
             this.editinfo = {id: id,name: name, created: created, description: description, link: link, private: private, index: index};
-
         },
         
         // updateEdit updates clientside data
@@ -344,7 +352,17 @@ let userC = {
         newProject: function(data) {
             // Updating client-side data
             let copy = JSON.parse(JSON.stringify(data));
-            this.projects.push(copy)
+
+            var currentdate = new Date(); 
+            var datetime = currentdate.getFullYear() + "-"
+                + (currentdate.getMonth()+1)  + "-" 
+                + currentdate.getDate() + " "  
+                + currentdate.getHours() + ":"  
+                + currentdate.getMinutes() + ":" 
+                + currentdate.getSeconds();
+            copy.updated = datetime
+
+            this.projects.push(copy);
         },
         newPost: function(newpost) {
             let copy = JSON.parse(JSON.stringify(newpost));

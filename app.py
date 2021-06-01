@@ -242,7 +242,7 @@ def serve(userid):
             description = request.form["description"]
             link = request.form.get("link","").strip()
             
-            query_db("INSERT INTO Projects (userid, name, created, description, link) VALUES (?,?,?,?,?);", get_db(), userid, name, created, description, link)
+            query_db("INSERT INTO Projects (userid, name, created, description, link, updated) VALUES (?,?,?,?,?, datetime('now', 'localtime'));", get_db(), userid, name, created, description, link)
             id = query_db("SELECT MAX(ID) FROM Projects", get_db(), one=True)[0]
             response["projectid"] = id
         else:
@@ -410,12 +410,14 @@ def posts(userid):
             posts[i]["projectid"] = post[4]
             posts[i]["date"] = post[5]
 
-        print(posts)
         return json.dumps(posts)
 
     if request.method == "POST":
         if validate_session(userid):
             projectid = request.form.get("projectid").strip()
+            if projectid==None or projectid == "":
+                return json.dumps("Posts needs to be connected to a project")
+            
             type = request.form.get("type").strip()
             text = request.form.get("text","").strip()
 
