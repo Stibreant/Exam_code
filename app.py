@@ -122,7 +122,7 @@ def users():
     return json.dumps(response)
 
 
-@app.route("/api/user/<userid>", methods=["GET", "DELETE"])
+@app.route("/api/user/<userid>", methods=["GET", "DELETE", "PUT"])
 def user(userid):
     if request.method == "GET":
         try:
@@ -148,6 +148,40 @@ def user(userid):
             session.pop("userid")
             return json.dumps("User deleted")
         else:
+            return json.dumps("Permission denied")
+
+    if request.method == "PUT":
+        response = dict()
+        errors = [] 
+        if validate_session(userid):
+            username = request.form.get("username").strip()
+            errors = validate_input(username, "En Streng")
+            # Check bio
+            bio = request.form.get("bio").strip()
+            if len(bio) == 0:
+                errors.append("A user needs to have a bio")
+            elif len(bio) > 250:
+                errors.append("A bio cannot be more than 250 characthers")
+
+            # If no input errors
+            if len(errors) == 0:
+                # Check if different username
+                if username != query_db("select username from users WHERE id=?", get_db(), session.get("userid"), one=True)[0]:
+                    # Check if username is taken
+                    taken = query_db("select count(username) FROM users WHERE username=?;", get_db(), username, one=True)
+                    if taken[0] == 0:
+                        query_db("UPDATE users SET username=?, bio=? WHERE id = ?;", get_db(), username, bio, userid, one=True)
+                    else:
+                        errors.append("Username is taken")
+                else:
+                    query_db("UPDATE users SET username=?, bio=? WHERE id = ?;", get_db(), username, bio, userid, one=True)
+
+            
+            response["errors"] = errors        
+            return json.dumps(response)
+        else:
+            errors.append("You do not have permission to change this user")
+            response["errors"] = errors
             return json.dumps("Permission denied")
 
 
@@ -432,17 +466,28 @@ def posts(userid):
 
             query_db("INSERT INTO posts (type, text, userid, projectid, date) VALUES (?, ?, ?, ?, datetime('now', 'localtime'));", get_db(), type, text, userid, projectid)
             id = query_db("SELECT MAX(ID) FROM posts", get_db(), one=True)[0]
+
+            #Update update_date on project
+            query_db("UPDATE projects SET updated=datetime('now', 'localtime') WHERE id=?;", get_db(), int(projectid))
             return json.dumps(id)
         else: 
             return json.dumps("Permission denied")
 
 @app.route("/api/post/<postid>", methods = ["DELETE"])
 def post(postid):
+    response = dict()
     if request.method == "DELETE":
-        userid = query_db("SELECT userid FROM posts WHERE id = ?;", get_db(), postid, one=True)
-        if validate_session(userid[0]):
+        row = query_db("SELECT userid, projectid FROM posts WHERE id = ?;", get_db(), postid, one=True)
+        if validate_session(row[0]):
             query_db("DELETE FROM posts WHERE id = ?;", get_db(), postid, one=True)
-            return json.dumps("Deleted")
+            date = query_db("SELECT MAX(date) from posts WHERE projectid =?", get_db(), row[1])
+            if date[0][0] == None:
+                date = query_db("SELECT created from projects WHERE id =?", get_db(), row[1])
+        
+
+            query_db("UPDATE projects SET updated=? WHERE id=?", get_db(), date[0][0], row[1])
+            response["date"] = date[0][0]
+            return json.dumps(response)
         else:
             return json.dumps("Permission denied")
 

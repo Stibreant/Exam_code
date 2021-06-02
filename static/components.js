@@ -206,7 +206,9 @@ let userC = {
     template: /*html*/ `
     <navbar v-on:updatedstate="this.check_followed"></navbar> 
     <div id="main">
-    <h1>Username {{ $route.params.id }}</h1>
+    <div>
+        <h1 style="display:inline-block;">Username: </h1> <input style="display:inline-block;" type="text" v-model="this.editUsername" v-if="this.showEditUser"/> <h1 v-else style="display:inline-block;">{{ $route.params.id }}</h1>
+    </div>
     
 
         <div class="framed" id="user">
@@ -216,14 +218,23 @@ let userC = {
 
             <div id="text">
                 <h2>Bio</h2>
-                <p>{{ this.bio }}</p>
+                <p v-if="this.showEditUser == false">{{ this.bio }}</p>
+                <textarea v-else max-length="250" v-model="this.editbio"></textarea>
                 <div v-if="this.loggedInUser.username!='' && this.loggedInUser.username!=$route.params.id.toLowerCase() ">
                     <button v-if="this.followed == false"  v-on:click="this.updatefollow">FOLLOW</button>
                     <button v-else v-on:click="this.updatefollow">UNFOLLOW</button>
                 </div>
                 
                 <div v-if="this.loggedInUser.username==$route.params.id.toLowerCase()"> 
-                    <button  @click="this.deleteUser"> DELETE ACCOUNT </button>
+                    <div v-if="this.showEditUser == true"> 
+                        <button @click="this.showEditUser = false;"> Cancel </button>
+                        <button @click="this.editUser"> Save </button>
+                    </div>
+                    
+                    <div v-else> 
+                        <button @click="this.showEditUser = true; this.editbio = this.bio;this.editUsername = $route.params.id;"> Edit account </button>
+                        <button @click="this.deleteUser"> DELETE ACCOUNT </button>
+                    </div>
                 </div>
                 
                 
@@ -269,6 +280,9 @@ let userC = {
             showprojectform: false,
             editinfo: {id: "",name: "", created: "", description: "", link: "", private: "", index: -1},
             loaded: false,
+            showEditUser: false,
+            editbio: "",
+            editUsername: "",
         }
     },
     created: async function() {
@@ -378,6 +392,15 @@ let userC = {
                 + currentdate.getMinutes() + ":" 
                 + currentdate.getSeconds();
             copy.date = datetime
+
+            for (let i = 0; i < this.projects.length; i++) {
+                if (this.projects[i].id == copy.projectid){
+                    this.projects[i].updated = datetime;
+                    break;
+                }
+                
+                
+            }
             
             this.posts.push(copy)
         },
@@ -439,5 +462,34 @@ let userC = {
                 }   
             }
         },
+        editUser: async function() {
+            console.log("User edited");
+            console.log(this.editbio);
+            let response = await fetch("/api/user/" +  this.pageuserid, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: "bio=" + this.editbio + "&username=" + this.editUsername
+            });
+            if (response.status == 200){
+                result = await response.json();
+                
+                if (result.errors.length != 0){
+                    let text = ""
+                    for (i in result.errors) {
+                        text += result.errors[i] + "\n"
+                    }
+                    alert(text)
+                }
+                else{
+                    this.showEditUser = false;
+                    this.bio = this.editbio;
+                    this.$route.params.id = this.editUsername;
+                    state.user.username = this.editUsername;
+                
+                }
+            }
+        }
     }  
 };
