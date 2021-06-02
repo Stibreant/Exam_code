@@ -23,8 +23,8 @@ let homeC = {
         
         <br>
 
-        <div v-for="project in this.projects">
-            <projectc v-bind:username="project.username" v-bind:displayusername="true" v-bind:name="project.name" v-bind:editable="false" v-bind:id="project.id" v-bind:created="project.created" v-bind:updated="project.updated" v-bind:description="project.description" v-bind:link="project.link" v-bind:private="project.private"></projectc>
+        <div>
+            <projectc v-for="project in this.projects" v-bind:username="project.username" v-bind:displayusername="true" v-bind:name="project.name" v-bind:editable="false" v-bind:id="project.id" v-bind:created="project.created" v-bind:updated="project.updated" v-bind:description="project.description" v-bind:link="project.link" v-bind:private="project.private"></projectc>
         </div>
         <div id="postcontainer">
             <i v-if="this.posts.length==0" class="fa fa-spinner fa-spin fa-2x"></i>
@@ -222,7 +222,10 @@ let userC = {
                     <button v-else v-on:click="this.updatefollow">UNFOLLOW</button>
                 </div>
                 
-                <button v-if="this.loggedInUser.username==$route.params.id.toLowerCase()" @click="this.deleteUser"> DELETE ACCOUNT </button>
+                <div v-if="this.loggedInUser.username==$route.params.id.toLowerCase()"> 
+                    <button  @click="this.deleteUser"> DELETE ACCOUNT </button>
+                </div>
+                
                 
             </div>
         </div>

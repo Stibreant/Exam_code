@@ -54,7 +54,11 @@ input {
   right: 0px;
   top: 0px;
   outline: none;
-  z-index: 99;
+  z-index: 99; 
+}
+
+#searchcontainer input {
+  width: 20em;
 }
 
 #searchlist {
@@ -128,8 +132,7 @@ a {
 
 #searchlist {
   height: 5em;
-  width: 10em;
-  scrollbar-width: none;
+  scrollbar-width: thin;
   overflow: scroll;
 }
 

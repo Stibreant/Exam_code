@@ -241,7 +241,7 @@ let registerC = {
             <form action="javascript:void(0);" v-bind:onsubmit="this.register">
                 <label>Username: </label> <br> <input type="text" name="username" v-model="registerModel.username" /><br/>
                 <label>Password:</label> <br> <input type="password" name="password" v-model="registerModel.password"><br/>
-                <label>Bio:</label> <br> <textarea name="bio" v-model="registerModel.bio" maxlength="250"></textarea><br/>
+                <label>Bio: ({{ this.registerModel.bio.length }}/250)</label> <br> <textarea name="bio" v-model="registerModel.bio" maxlength="250"></textarea><br/><span style="z-index:999;"><span>
                 <label>Github username:</label> <br> <input type="text" name="bio" v-model="registerModel.github"><br/>
                 <input type="submit" value="Register">
             </form>

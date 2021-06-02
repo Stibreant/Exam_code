@@ -54,10 +54,15 @@ def validate_input(username, password):
     errors = []
     if len(username) < 4:
         errors.append("Username must have at least 4 characters")
+    
+    elif len(username) > 20:
+        errors.append("Username cannot be more than 20 characters")
         
     if len(password) < 4:
         errors.append("Password must have at least 4 characters")
 
+    elif len(password) > 20:
+        errors.append("Password cannot be more than 20 characters")
     return errors
    
 def validate_session(test_userid):
@@ -85,6 +90,10 @@ def users():
         github = request.form.get("github","")
 
         errors = validate_input(username, password)
+        if len(bio) == 0:
+            errors.append("A user must have a bio")
+        elif len(bio) > 250:
+            errors.append("A bio cannot be more than 250 characters")
         
         if len(errors) == 0:
             try:
