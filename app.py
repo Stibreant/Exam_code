@@ -15,7 +15,6 @@ app.config.update(
     SESSION_COOKIE_SECURE=True,
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE='Lax',
-    PERMANENT_SESSION_LIFETIME=600
 )
 
 # init_db() Creates the database
@@ -26,12 +25,14 @@ def init_db():
             db.cursor().executescript(f.read())
         db.commit()
 
-@app.teardown_appcontext # Close the database if exception
+# Close the database if exception
+@app.teardown_appcontext 
 def close_connecting(exception):
     db = getattr(g, '_database', None)
     if db is not None:
         db.close()
 
+# Get connection, wtith PRAGMA foreing_keys
 def get_db():
     db = getattr(g, '_database', None)
     if db is None:
@@ -40,6 +41,7 @@ def get_db():
     db.row_factory = sqlite3.Row
     return db
 
+# Check username and encrypted password
 def check_password(username, password):
     """Checks if username-password combination is valid."""
     temp = query_db("SELECT passwordhash FROM users WHERE username=?", get_db(), username)
@@ -49,6 +51,7 @@ def check_password(username, password):
         return False
     return check_password_hash(hash, password)
 
+# Validate_input check if username and password follows specifications returns True/False
 def validate_input(username, password):
     """ Checks if a input if valid. Returns a list of errors, if any """
     errors = []
@@ -64,7 +67,18 @@ def validate_input(username, password):
     elif len(password) > 20:
         errors.append("Password cannot be more than 20 characters")
     return errors
-   
+
+# Validate_bio check if bio follows specifications returns True/False
+def validate_bio(bio):
+    """ Checks if a input if valid. Returns a list of errors, if any """
+    errors = []
+    if len(bio) == 0:
+            errors.append("A user must have a bio")
+    elif len(bio) > 250:
+        errors.append("A bio cannot be more than 250 characters")
+    return errors
+
+# Validate_session Check userid sent in with session userid, returns True/False
 def validate_session(test_userid):
     userid = session.get("userid")
     if str(userid) == str(test_userid):
@@ -72,40 +86,41 @@ def validate_session(test_userid):
     else:
         return False
 
+# Route("/") Serve intial Page
 @app.route("/")
 def index():
     return render_template("index.html")
 
-
 @app.route("/api/users", methods=["GET", "POST"])
 def users():
+    # Prepare response
     response = {}
     errors = []
 
     if request.method == "POST":
-        
         username = request.form.get("username","").strip().lower()
         password = request.form.get("password","")
         bio = request.form.get("bio","").strip()
         github = request.form.get("github","")
 
         errors = validate_input(username, password)
-        if len(bio) == 0:
-            errors.append("A user must have a bio")
-        elif len(bio) > 250:
-            errors.append("A bio cannot be more than 250 characters")
+        
+        # Validate Bio
+        for error in validate_bio(bio):
+            errors.append(error)
         
         if len(errors) == 0:
             try:
+                # Insert user
                 hash = generate_password_hash(password)
                 query_db("INSERT INTO users (username, passwordhash, bio, github, timestamp) VALUES (?,?,?,?, datetime('now', 'localtime'))", get_db(), username, hash, bio, github)
                 userid = query_db("SELECT MAX(ID) FROM users", get_db(), one=True)[0]
             except sqlite3.IntegrityError:
                 errors.append("Username is already taken")
             else:
+                # Get GitHub repos if GitHub username
                 if github != "":
                     repos = db_update(github)
-                    print(repos)
                     update_insert(repos, userid)
     
     if request.method == "GET":
@@ -141,7 +156,6 @@ def user(userid):
             user=None
         return json.dumps(user)
         
-    
     if request.method == "DELETE":
         if validate_session(userid):
             query_db("DELETE FROM users WHERE id=?", get_db(), userid)
@@ -156,14 +170,11 @@ def user(userid):
         if validate_session(userid):
             username = request.form.get("username").strip()
             errors = validate_input(username, "En Streng")
-            # Check bio
-            bio = request.form.get("bio").strip()
-            if len(bio) == 0:
-                errors.append("A user needs to have a bio")
-            elif len(bio) > 250:
-                errors.append("A bio cannot be more than 250 characthers")
 
-            # If no input errors
+            bio = request.form.get("bio").strip()
+            for error in validate_bio(bio):
+                errors.append(error)
+
             if len(errors) == 0:
                 # Check if different username
                 if username != query_db("select username from users WHERE id=?", get_db(), session.get("userid"), one=True)[0]:
@@ -176,7 +187,6 @@ def user(userid):
                 else:
                     query_db("UPDATE users SET username=?, bio=? WHERE id = ?;", get_db(), username, bio, userid, one=True)
 
-            
             response["errors"] = errors        
             return json.dumps(response)
         else:
@@ -185,12 +195,12 @@ def user(userid):
             return json.dumps("Permission denied")
 
 
-# Converts username to userid.
+# Route to convert username to userid.
 @app.route("/api/userid/<username>", methods = ["GET"])
 def userid(username):
     userid = query_db("Select id from users where username=?;", get_db(), username.lower(), one=True)
     if userid==None:
-        print(f"/api/userid/<username>: Could not find Userid {username}")
+        print(f"/api/userid/<username>: Could not find Userid for {username}")
         return json.dumps(userid)
     return json.dumps(userid[0])
 
@@ -200,13 +210,11 @@ def login_toindex():
     response = {}
     if request.method == "POST":
         if session.get("userid") == None:
-
             errors = validate_input(request.form["username"].lower(), request.form["password"])
             
             if len(errors) == 0:
                 user = query_db("SELECT id FROM users WHERE username=?", get_db(), request.form["username"].lower(), one=True)
                 
-
                 if user == None: # Could not find user
                     errors.append("Incorrect username or password")
 
@@ -278,7 +286,6 @@ def serve(userid):
     if request.method == "POST":
         response = {}
         errors= []
-        # TODO or user.role == Admin:
         if validate_session(userid):
             name = request.form["name"]
             created = request.form["created"]
@@ -288,6 +295,12 @@ def serve(userid):
             query_db("INSERT INTO Projects (userid, name, created, description, link, updated) VALUES (?,?,?,?,?, datetime('now', 'localtime'));", get_db(), userid, name, created, description, link)
             id = query_db("SELECT MAX(ID) FROM Projects", get_db(), one=True)[0]
             response["projectid"] = id
+
+            
+            sql = f"INSERT INTO posts (type, text, userid, projectid, date) VALUES(?, ?, ?, ?, datetime('now', 'localtime'));"
+            query_db(sql, get_db(),"created a new project", None, userid, id)
+            postid = query_db("SELECT MAX(ID) FROM posts", get_db(), one=True)[0]
+            response["postid"] = postid
         else:
             errors = ["Unauthorized access"]
 
@@ -410,8 +423,6 @@ def followers(userid):
 @app.route("/api/follower/<userid>/<followerid>", methods = ["GET", "DELETE"])
 def follower(userid, followerid):
     if request.method == "GET":
-        print(userid)
-        print(followerid)
         query = query_db("SELECT * from follows WHERE userid=? AND followerid=?;", get_db(), userid, followerid, one=True)
         if query == None:
             return json.dumps(False)

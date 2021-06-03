@@ -63,7 +63,7 @@ let projectformC = {
                 this.errors = result.errors;
                 if (this.errors.length == 0) {
                     this.registerModel.id = result.projectid;
-                    this.$emit('newProject', this.registerModel);
+                    this.$emit('newProject', this.registerModel, result.postid);
                 }
                 
                 /*if (this.errors.length == 0){
@@ -159,12 +159,6 @@ let postformC = {
                 let result = await response.json();
                 this.postModel.id = result;
                 this.$emit('newpost', this.postModel);
-
-                // this.errors = result.errors;
-                // if (this.errors.length == 0) {
-                //     this.registerModel.id = result.projectid;
-                //     this.$emit('newProject', this.registerModel);
-                // }
             }
         }
     }    

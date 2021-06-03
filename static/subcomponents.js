@@ -59,7 +59,7 @@ let postC = {
     template: /*html*/`
     <div class="framed"> 
         <div id="text">
-            <h2 style="display: inline-block"><a :href="'/#/user/' + this.username">@{{ this.username }}</a> {{this.type}} {{ this.projectname }}</h2> 
+            <h2 style="display: inline-block"><a :href="'/#/user/' + this.username">@{{ this.username }}</a> {{this.type}} <a :href="'/#/project/' + this.projectid">{{ this.projectname }}</a></h2> 
             <p style="display: inline-block; margin-left: 1em;color: rgb(150,155,160)"> {{this.date}} </p>
            
             <i v-if="this.editable==true" v-on:click="this.delete" class="fa fa-times-circle fa-2x buttoncontainer"></i>
@@ -84,7 +84,6 @@ let postC = {
             if (response.status == 200){
                 let result = await response.json();
                 this.projectname = result.name;
-                //console.log(result);
             }
         },
         delete: async function() {
@@ -95,7 +94,6 @@ let postC = {
                 if (response.status == 200){
                     let result = await response.json();
                     this.$emit("deleted", this.index)
-                    console.log(result);
                 }
             }
         }
@@ -172,7 +170,7 @@ let projectC = {
                         </label>
                     </div>
 
-                    <div v-if="this.displayusername==true">
+                    <div v-if="this.displayusername==true" style="float:right;">
                         Created by user: {{ this.username }}
                     </div>
                 </div>
@@ -194,7 +192,6 @@ let projectC = {
                 if (response.status == 200){
                     let result = await response.json();
                     this.$emit("deleted", this.index);
-                    console.log(result);
                 }
             }
         },
@@ -236,7 +233,6 @@ let searchC = {
                 if (response.status == 200){    
                     let result = await response.json();
                     this.data = result.usernames;
-                    //console.log(this.data);
             }
             }
         },
@@ -250,7 +246,6 @@ let searchC = {
             filter = input.toUpperCase();
             table = document.getElementById("searchlist");
             elements = Array.from(table.children);
-            console.log(table)
 
             // Loop through all elements, and hide those who don't match the search query
             for (i = 0; i < elements.length; i++) {

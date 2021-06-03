@@ -9,7 +9,6 @@ let state = {
 
 let homeC = {
     template: /*html*/ ` 
-
     <navbar v-on:loggedout="this.get_data" v-on:updatedstate="this.get_following"></navbar>
     <div id=main>
         <img src="/static/Pictures/Show the world.png" style="width: 100%;" alt="Banner image">
@@ -90,21 +89,13 @@ let homeC = {
                     let result = await response.json();
                     
                     for (i in result) {
-                        //this.posts.push(result[i]);
                         this.followposts.push(result[i]);
                         this.get_username(i, "followpost");
                     }
                 }
             }
         },
-        shuffle: function( a, b ) { 
-            
-            /*function(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }*/
-            
+        dateSort: function( a, b ) { 
             if ( a.date < b.date ){
                 return 1;
             }
@@ -123,10 +114,7 @@ let homeC = {
                     for (let i = 0; i < this.userids.length; i++) {
                         const element = this.userids[i];
                         //if not following the user, add posts his posts to new posts
-                        console.log(this.userids[i])
-                        console.log(this.user.userid)
                         if (!this.following.includes(this.userids[i]) && this.userids[i] != this.user.userid){
-                            console.log("run")
                             users_posts = await this.get_posts(element);
                             if (users_posts.length != 0){
                                 for (j in users_posts){
@@ -139,15 +127,14 @@ let homeC = {
                     }
 
                     // Sort by posttime.
-                    this.newposts.sort( this.shuffle);
-                    this.followposts.sort( this.shuffle );
+                    this.newposts.sort( this.dateSort);
+                    this.followposts.sort( this.dateSort );
 
                     /// MERGE ///
                     // Ten posts from following and 1 from newposts.
                     for (let i = 0; i < this.followposts.length; i++) {
                         for (let j = 0; j < 10; j++) {
                             if (i*10+j < this.followposts.length){
-                                console.log(i*10+j);
                                 this.posts.push(this.followposts[i*10+j]);
                             }
                             if (j==9){
@@ -366,7 +353,7 @@ let userC = {
             this.projects.splice(index, 1);
         },
 
-        newProject: function(data) {
+        newProject: function(data, postid) {
             // Updating client-side data
             let copy = JSON.parse(JSON.stringify(data));
 
@@ -380,6 +367,16 @@ let userC = {
             copy.updated = datetime
 
             this.projects.push(copy);
+
+            let post = {
+                id: postid,
+                userid: this.loggedInUser.userid,
+                projectid: data.id,
+                text: null,
+                date: datetime,
+                type: "created a new project"
+            }
+            this.posts.push(post)
         },
         newPost: function(newpost) {
             let copy = JSON.parse(JSON.stringify(newpost));
@@ -408,7 +405,6 @@ let userC = {
             this.posts.splice(index, 1)
         },
         updatefollow: async function() {
-            console.log(state.user.userid)
             if (this.followed == false){
                 // Post new follower
                 let response = await fetch("/api/followers/" +  this.pageuserid, {
@@ -421,7 +417,6 @@ let userC = {
                 if (response.status == 200){
                     let result = await response.json();
                     this.followed = true;
-                    console.log(result);
                 }
             }
             else {
@@ -432,7 +427,6 @@ let userC = {
                 if (response.status == 200){
                     let result = await response.json();
                     this.followed = false;
-                    console.log(result);
                 }   
             }
         },
@@ -458,13 +452,10 @@ let userC = {
                 if (response.status == 200){
                     let result = await response.json();
                     alert(result)
-                    console.log(result);
                 }   
             }
         },
         editUser: async function() {
-            console.log("User edited");
-            console.log(this.editbio);
             let response = await fetch("/api/user/" +  this.pageuserid, {
                 method: "PUT",
                 headers: {
@@ -493,3 +484,45 @@ let userC = {
         }
     }  
 };
+
+let postsiteC = {
+    template:/*html*/`
+    <navbar></navbar>
+    <div id=main> 
+        <projectc :editable="false" :displayusername="true" :username="this.username" :name="this.projectname" :id="this.id" :created="this.created" :updated="this.updated" :description="this.description" :link="this.link"></projectc>
+    </div>
+    `,
+    data: function() {
+        return {
+            projectname: "",
+            id: this.$route.params.id,
+            created: "",
+            updated: "",
+            description: "",
+            link: "",
+            username: "",
+        }
+    },
+    created: function() {
+        this.get_data()
+    },
+    methods:{
+        get_data: async function(){
+            let response = await fetch("/api/project/" + this.id);
+            if (response.status == 200){
+                let result = await response.json();
+                this.projectname = result.name;
+                this.created = result.created;
+                this.updated = result.updated;
+                this.description = result.description;
+                this.link = result.link;
+
+                let response2 = await fetch("/api/user/" + result.userid);
+                if (response2.status == 200){
+                    let result2 = await response2.json();
+                    this.username = result2.username;
+                }
+            }
+        }
+    }
+}

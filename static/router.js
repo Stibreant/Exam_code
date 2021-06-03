@@ -7,6 +7,7 @@ let router = VueRouter.createRouter({
                                         {
                                             default: userC,
                                         }},
-        { path: "/register", component: registerC}
+        { path: "/register", component: registerC},
+        { path: "/project/:id", component: postsiteC}
     ]
 })
