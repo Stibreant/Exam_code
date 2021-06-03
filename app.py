@@ -101,7 +101,13 @@ def users():
         username = request.form.get("username","").strip().lower()
         password = request.form.get("password","")
         bio = request.form.get("bio","").strip()
-        github = request.form.get("github","")
+        github = request.form.get("github","").strip() 
+        email = request.form.get("email","").strip()
+        twitter = request.form.get("twitter","").strip()
+
+        print(email)
+        print(twitter)
+       
 
         errors = validate_input(username, password)
         
@@ -113,7 +119,7 @@ def users():
             try:
                 # Insert user
                 hash = generate_password_hash(password)
-                query_db("INSERT INTO users (username, passwordhash, bio, github, timestamp) VALUES (?,?,?,?, datetime('now', 'localtime'))", get_db(), username, hash, bio, github)
+                query_db("INSERT INTO users (username, passwordhash, bio, github, twitter, email, timestamp) VALUES (?,?,?,?, ?, ?,datetime('now', 'localtime'))", get_db(), username, hash, bio, github, twitter, email)
                 userid = query_db("SELECT MAX(ID) FROM users", get_db(), one=True)[0]
             except sqlite3.IntegrityError:
                 errors.append("Username is already taken")
@@ -175,17 +181,19 @@ def user(userid):
             for error in validate_bio(bio):
                 errors.append(error)
 
+            color = request.form.get("color")
+
             if len(errors) == 0:
                 # Check if different username
                 if username != query_db("select username from users WHERE id=?", get_db(), session.get("userid"), one=True)[0]:
                     # Check if username is taken
                     taken = query_db("select count(username) FROM users WHERE username=?;", get_db(), username, one=True)
                     if taken[0] == 0:
-                        query_db("UPDATE users SET username=?, bio=? WHERE id = ?;", get_db(), username, bio, userid, one=True)
+                        query_db("UPDATE users SET username=?, bio=?, color=? WHERE id = ?;", get_db(), username, bio, color, userid, one=True)
                     else:
                         errors.append("Username is taken")
                 else:
-                    query_db("UPDATE users SET username=?, bio=? WHERE id = ?;", get_db(), username, bio, userid, one=True)
+                    query_db("UPDATE users SET bio=?, color=? WHERE id = ?;", get_db(), bio, color, userid, one=True)
 
             response["errors"] = errors        
             return json.dumps(response)
@@ -263,7 +271,6 @@ def serve(userid):
             github = user[1]
             repos = db_update(github)
             update_insert(repos, userid)
-            # TODO check if ovveride or not :/
             update_timestamp(userid)
 
         

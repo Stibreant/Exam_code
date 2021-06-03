@@ -1,3 +1,10 @@
+let state = {
+    user: Vue.reactive({
+            username: "",
+            userid: "",
+    })
+};
+
 let navbarC = {
     template: /*html*/`
     <div class="navbar">
@@ -163,13 +170,6 @@ let projectC = {
                     </span>
 
                     <br>
-                    <div v-if="this.editable==true">                  
-                        <label class="switch" style="float: right;">
-                            <input type="checkbox" @click="this.checkbox" v-model="this.override">
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
-
                     <div v-if="this.displayusername==true" style="float:right;">
                         Created by user: {{ this.username }}
                     </div>
@@ -179,7 +179,6 @@ let projectC = {
     `,
     data: function () {
         return {
-            override: this.overridet,
         }
     },
 

@@ -236,7 +236,10 @@ let registerC = {
                 <label>Username: </label> <br> <input type="text" name="username" v-model="registerModel.username" /><br/>
                 <label>Password:</label> <br> <input type="password" name="password" v-model="registerModel.password"><br/>
                 <label>Bio: ({{ this.registerModel.bio.length }}/250)</label> <br> <textarea name="bio" v-model="registerModel.bio" maxlength="250"></textarea><br/><span style="z-index:999;"></span>
-                <label>Github username:</label> <br> <input type="text" name="bio" v-model="registerModel.github"><br/>
+                <h3>Optional:</h3>
+                <label>Github username:</label> <br> <input type="text" name="github" v-model="registerModel.github"><br/>
+                <label>E-mail:</label> <br> <input type="text" name="email" v-model="registerModel.email"><br/>
+                <label>Twitter username:</label> <br> <input type="text" name="twitter" v-model="registerModel.twitter"><br/>
                 <input type="submit" value="Register">
             </form>
         </div>
@@ -244,7 +247,7 @@ let registerC = {
 
     data: function() { 
         return {
-            registerModel: {username: "", password: "", bio: "", github: ""},
+            registerModel: {username: "", password: "", bio: "", github: "", twitter: "", email:""},
             errors: [],
         }
       },
@@ -259,7 +262,7 @@ let registerC = {
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded",
                 },
-                body: "username=" + this.registerModel.username + "&password=" + this.registerModel.password + "&github=" + this.registerModel.github + "&bio=" + this.registerModel.bio
+                body: "username=" + this.registerModel.username + "&password=" + this.registerModel.password + "&github=" + this.registerModel.github + "&bio=" + this.registerModel.bio + "&email=" + this.registerModel.email + "&twitter=" + this.registerModel.twitter
             });
             if (response.status == 200){
                 let result = await response.json();

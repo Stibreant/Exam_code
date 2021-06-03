@@ -7,7 +7,6 @@ CREATE TABLE users(
     id INTEGER, 
     username VARCHAR(20) NOT NULL UNIQUE, 
     passwordhash VARCHAR(120) NOT NULL, 
-    token text,
     bio VARCHAR(250),
     color text,
     email text,
@@ -28,7 +27,6 @@ CREATE TABLE projects(
     website TEXT,
     link TEXT,
     private BOOLEAN,
-    override BOOLEAN,
     FOREIGN KEY(userid) REFERENCES users(id) ON DELETE CASCADE
 );
 

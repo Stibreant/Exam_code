@@ -1,12 +1,3 @@
-let state = {
-    user: Vue.reactive({
-            username: "",
-            userid: "",
-    })
-};
-
-
-
 let homeC = {
     template: /*html*/ ` 
     <navbar v-on:loggedout="this.get_data" v-on:updatedstate="this.get_following"></navbar>
@@ -198,7 +189,7 @@ let userC = {
     </div>
     
 
-        <div class="framed" id="user">
+        <div class="framed" id="user" :style="{'background-color':this.color}">
         
             <!-- <figure><img src="" alt="Profile_picture"></figure> -->
             <i class="fa fa-user-circle-o fa-5x" aria-hidden="true"></i>
@@ -214,7 +205,8 @@ let userC = {
                 
                 <div v-if="this.loggedInUser.username==$route.params.id.toLowerCase()"> 
                     <div v-if="this.showEditUser == true"> 
-                        <button @click="this.showEditUser = false;"> Cancel </button>
+                        <input type="color" v-model="this.color">
+                        <button @click="this.showEditUser = false; this.color=this.prevcolor;"> Cancel </button>
                         <button @click="this.editUser"> Save </button>
                     </div>
                     
@@ -223,8 +215,9 @@ let userC = {
                         <button @click="this.deleteUser"> DELETE ACCOUNT </button>
                     </div>
                 </div>
-                
-                
+                <a v-if="this.user.github != ''" :href="'http://www.github.com/' + this.user.github"><i class="fa fa-github"></i></a>
+                <a v-if="this.user.twitter != ''" :href="'http://www.twitter.com/' + this.user.twitter"><i class="fa fa-twitter"></i></a>
+                <a v-if="this.user.email != ''" :href="'mailto:' + this.user.email"><i class="fa fa-envelope"></i></a>
             </div>
         </div>
 
@@ -233,7 +226,7 @@ let userC = {
         <i v-if="this.loggedInUser.username==$route.params.id.toLowerCase()" class="fa fa-plus-square fa-2x" aria-hidden="true" @click="this.showpostform = !this.showpostform"></i>
         <postformc v-if="this.showpostform"  v-on:newpost="this.newPost" :projects="this.projects" :userid="this.loggedInUser.userid"></postformc>
 
-        <postc v-for="post, i in this.posts" v-on:deleted="this.deletePost" v-bind:editable="this.editable" :index="i" :date="post.date" :id="post.id" :projectid="post.projectid" :text="post.text" :type="post.type" :username="$route.params.id"></postc>
+        <postc :style="{'background-color':this.color}" v-for="post, i in this.posts" v-on:deleted="this.deletePost" v-bind:editable="this.editable" :index="i" :date="post.date" :id="post.id" :projectid="post.projectid" :text="post.text" :type="post.type" :username="$route.params.id"></postc>
         <i v-if="this.loaded==false" class="fa fa-spinner fa-spin"></i>
         <span v-if="this.loaded == true && this.posts.length == 0">User has yet to post</span>
 
@@ -243,11 +236,11 @@ let userC = {
         <i v-if="this.loggedInUser.username==$route.params.id.toLowerCase()" class="fa fa-plus-square fa-2x" aria-hidden="true" @click="this.showprojectform = !this.showprojectform"></i>
         <projectformc v-if="this.showprojectform" v-on:newProject="this.newProject" :userid="this.loggedInUser.userid"></projectformc>
 
-        <projectc v-for="project, i in this.projects" v-on:deleted="this.deleteProject" v-on:edited="this.edit" v-bind:index="i" v-bind:editable="this.editable" v-bind:name="project.name" v-bind:id="project.id" v-bind:created="project.created" v-bind:updated="project.updated" v-bind:description="project.description" v-bind:link="project.link" v-bind:private="project.private" :override="project.override"></projectc>
+        <projectc :style="{'background-color':this.color}" v-for="project, i in this.projects" v-on:deleted="this.deleteProject" v-on:edited="this.edit" v-bind:index="i" v-bind:editable="this.editable" v-bind:name="project.name" v-bind:id="project.id" v-bind:created="project.created" v-bind:updated="project.updated" v-bind:description="project.description" v-bind:link="project.link" v-bind:private="project.private" :override="project.override"></projectc>
         <i v-if="this.loaded==false" class="fa fa-spinner fa-spin"></i>
         <span v-if="this.loaded == true && this.projects.length == 0">User has no projects</span>
 
-        <div v-if="this.showedit">
+        <div v-if="this.showedit" :style="{'background-color':this.color}">
             <projectformc v-on:submit="this.updateEdit" v-bind:id="this.editinfo.id" v-bind:name="this.editinfo.name" v-bind:created="this.editinfo.created"  v-bind:description="this.editinfo.description" v-bind:link="this.editinfo.link" v-bind:private="this.editinfo.private"></projectformc>
         </div>
         <br>
@@ -270,6 +263,9 @@ let userC = {
             showEditUser: false,
             editbio: "",
             editUsername: "",
+            color: "#15181c",
+            prevcolor: "#15181c",
+            user: {github: "", twitter: "", email:""}
         }
     },
     created: async function() {
@@ -289,6 +285,7 @@ let userC = {
     },
     methods: {
         get_data: async function() {
+            // Get userid from params
             let response2 = await fetch("/api/userid/" + this.$route.params.id);
             if (response2.status == 200){
                 result = await response2.json();
@@ -320,6 +317,10 @@ let userC = {
             if (response1.status == 200){
                 let result = await response1.json();
                 this.bio = result.bio;
+                this.color = result.color;
+                this.user.github = result.github;
+                this.user.twitter = result.twitter;
+                this.user.email = result.email;
             }
         },
 
@@ -461,11 +462,10 @@ let userC = {
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded",
                 },
-                body: "bio=" + this.editbio + "&username=" + this.editUsername
+                body: "bio=" + this.editbio + "&username=" + this.editUsername + "&color=" + this.color
             });
             if (response.status == 200){
                 result = await response.json();
-                
                 if (result.errors.length != 0){
                     let text = ""
                     for (i in result.errors) {
@@ -478,6 +478,7 @@ let userC = {
                     this.bio = this.editbio;
                     this.$route.params.id = this.editUsername;
                     state.user.username = this.editUsername;
+                    this.prevcolor = this.color;
                 
                 }
             }

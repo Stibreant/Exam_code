@@ -9,6 +9,7 @@ Start the application by running `app.py` in the `Exam_code` folder.
   * If a user tries to register and fails a specification e.g. password too short or etc., the server sends a JSON with all errors that the user must fix to register.
   * Users may be choose to delete their account and subsequently all information about this user will be deleted.
   * Users can change their username and Bio, Changes still gets checked for the same criteria as when a user is created.
+  * Users can change the color of elements in their own page.
 
 - Projects:
   * Users that register with a github username will automatically get all their public repos' information into the application. The app will update the information if their userpage is visited and it has been at least 10 minutes since last time the information was updated. This is done by using the github API.
