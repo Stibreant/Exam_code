@@ -206,13 +206,19 @@ let userC = {
                     </div>
                     
                     <div v-else> 
-                        <button @click="this.showEditUser = true; this.editbio = this.bio;this.editUsername = $route.params.id;"> Edit account </button>
+                        <button @click="this.showEditUser = true; this.editbio = this.bio;this.editUsername = $route.params.id; this.editlinks = {twitter: this.user.twitter, email: this.user.email};"> Edit account </button>
                         <button @click="this.deleteUser"> DELETE ACCOUNT </button>
                     </div>
                 </div>
-                <a v-if="this.user.github != ''" :href="'http://www.github.com/' + this.user.github"><i class="fa fa-github"></i></a>
-                <a v-if="this.user.twitter != ''" :href="'http://www.twitter.com/' + this.user.twitter"><i class="fa fa-twitter"></i></a>
-                <a v-if="this.user.email != ''" :href="'mailto:' + this.user.email"><i class="fa fa-envelope"></i></a>
+                <div v-if="this.showEditUser == false">
+                    <a v-if="this.user.github != ''" :href="'http://www.github.com/' + this.user.github"><i class="fa fa-github"></i></a>
+                    <a v-if="this.user.twitter != ''" :href="'http://www.twitter.com/' + this.user.twitter"><i class="fa fa-twitter"></i></a>
+                    <a v-if="this.user.email != ''" :href="'mailto:' + this.user.email"><i class="fa fa-envelope"></i></a>
+                </div>
+                <div v-else>
+                    <label>E-mail:</label> <br> <input type="text" name="email" v-model="editlinks.email"><br/>
+                    <label>Twitter username:</label> <br> <input type="text" name="twitter" v-model="editlinks.twitter"><br/>
+                </div>
             </div>
         </div>
 
@@ -258,6 +264,7 @@ let userC = {
             showEditUser: false,
             editbio: "",
             editUsername: "",
+            editlinks: {twitter: "", email: ""},
             color: "#15181c",
             prevcolor: "#15181c",
             user: {github: "", twitter: "", email:""}
@@ -313,6 +320,9 @@ let userC = {
                 let result = await response1.json();
                 this.bio = result.bio;
                 this.color = result.color;
+                if(this.color != null){
+                    this.prevcolor = result.color
+                }
                 this.user.github = result.github;
                 this.user.twitter = result.twitter;
                 this.user.email = result.email;
@@ -457,7 +467,7 @@ let userC = {
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded",
                 },
-                body: "bio=" + this.editbio + "&username=" + this.editUsername + "&color=" + this.color
+                body: "bio=" + this.editbio + "&username=" + this.editUsername + "&color=" + this.color  + "&twitter=" + this.editlinks.twitter  + "&email=" + this.editlinks.email 
             });
             if (response.status == 200){
                 result = await response.json();
@@ -474,6 +484,8 @@ let userC = {
                     this.$route.params.id = this.editUsername;
                     state.user.username = this.editUsername;
                     this.prevcolor = this.color;
+                    this.user.twitter = this.editlinks.twitter;
+                    this.user.email = this.editlinks.email;
                 
                 }
             }

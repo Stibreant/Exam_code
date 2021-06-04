@@ -178,6 +178,8 @@ def user(userid):
                 errors.append(error)
 
             color = request.form.get("color")
+            twitter = request.form.get("twitter").strip()
+            email = request.form.get("email").strip()
 
             if len(errors) == 0:
                 # Check if different username
@@ -185,11 +187,11 @@ def user(userid):
                     # Check if username is taken
                     taken = query_db("select count(username) FROM users WHERE username=?;", get_db(), username, one=True)
                     if taken[0] == 0:
-                        query_db("UPDATE users SET username=?, bio=?, color=? WHERE id = ?;", get_db(), username, bio, color, userid, one=True)
+                        query_db("UPDATE users SET username=?, bio=?, color=?, twitter=?, email=? WHERE id = ?;", get_db(), username, bio, color, twitter, email, userid, one=True)
                     else:
                         errors.append("Username is taken")
                 else:
-                    query_db("UPDATE users SET bio=?, color=? WHERE id = ?;", get_db(), bio, color, userid, one=True)
+                    query_db("UPDATE users SET bio=?, color=?, twitter=?, email=? WHERE id = ?;", get_db(), bio, color, twitter, email, userid, one=True)
 
             response["errors"] = errors        
             return json.dumps(response)
