@@ -34,15 +34,19 @@ Start the application by running `app.py` in the `Exam_code` folder.
  * username: lazyprogrammer password: passwrd                   (A beginner of the app)
  * username: Musk123 password: ElongatedMelon                   (Normal user)
  * username: Spammer password: 12345                            (Has a lot of posts and projects)
- * username: Follow4Follow password: Pwease                     (Follows everyone)
- * username: TheLoner password: Aplha                           (Follows no one)
- * username: Leander password: 1234                             (Shows the app taking in repos from github with username *leandernikolaus*)
+ * username: Follow4Follow password: Pweasefollow                    (Follows everyone)
+ * username: TheLoner password: Alpha                           (Follows no one)
+ * username: Leander password: 12345                         (Shows the app taking in repos from github with username *leandernikolaus*)
+ * username: stibreant password: 1234                        (Shows repos and links working)
 
 # Rest API
 
+\**(N/A)-expected function but not implemented in this app*
+\**No expected function and not implemented*
+
 | Link                                 | GET                           | POST                        | PUT                               | DELETE                        |
 |--------------------------------------|-------------------------------|-----------------------------|-----------------------------------|-------------------------------|
-| /api/session                         | Gets username                 | Logs in a  new session      | N/A                               | Deletes session               |
+| /api/session                         | Gets userid                   | Logs in a  new session      | N/A                               | Deletes session               |
 | /api/userid/\<username\>             | Gets userid                   |                             |                                   |                               |
 | /api/users                           | Gets list  of users           | Registers a new user        | Updates list  of users (N/A)      | Deletes list  of users (N/A)  |
 | /api/user/\<userid\>                 | Gets userinfo                 | N/A                         | Updates  existing user            | Deletes user                  |

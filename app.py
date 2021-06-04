@@ -105,10 +105,6 @@ def users():
         email = request.form.get("email","").strip()
         twitter = request.form.get("twitter","").strip()
 
-        print(email)
-        print(twitter)
-       
-
         errors = validate_input(username, password)
         
         # Validate Bio
@@ -263,7 +259,6 @@ def serve(userid):
         if user == None:
             print("Could not find userid")
             return json.dumps(["Could not find userid"])
-
         timestamp = user[0]
 
         # Check timestamp of user
@@ -454,7 +449,7 @@ def following(userid):
 def posts(userid):
     if request.method == "GET":
         posts = []
-        rows = query_db("SELECT * FROM posts WHERE userid = ?", get_db(), userid)
+        rows = query_db("SELECT * FROM posts WHERE userid = ? ORDER BY date DESC", get_db(), userid)
 
         for i, post in enumerate(rows):
             posts.append(dict())
@@ -464,6 +459,9 @@ def posts(userid):
             posts[i]["userid"] = post[3]
             posts[i]["projectid"] = post[4]
             posts[i]["date"] = post[5]
+
+        if rows==None:
+            posts = []
 
         return json.dumps(posts)
 

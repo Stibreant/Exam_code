@@ -59,11 +59,14 @@ def db_update(username):
 
 # Find new repos from github and add them to the database
 def update_insert(repos, userid):
-    oldIDs = query_db("SELECT githubid from projects where userid=?", get_db(), userid)
-    if len(oldIDs) == 0:
-        oldIDs = [[]]
+    oldIDsSqlite = query_db("SELECT githubid from projects where userid=?", get_db(), userid)
+    oldIDs = []
+    if len(oldIDsSqlite) != 0:
+        for i, oldid in enumerate(oldIDsSqlite):
+            oldIDs.append(oldid["githubid"])
+
     for repo in repos:
-        if repo["githubid"] not in oldIDs[0]: 
+        if repo["githubid"] not in oldIDs: 
             
             sql = f"INSERT INTO projects (userid, githubid ,name, created, updated, description, website, link) VALUES(?, ?, ?, ?, ?, ?, ?, ?);"
             query_db(sql, get_db(), userid, repo["githubid"], repo["name"], repo["created"], repo["updated"], repo["description"] ,repo["website"] ,repo["link"])

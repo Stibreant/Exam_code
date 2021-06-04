@@ -1,6 +1,6 @@
 let homeC = {
     template: /*html*/ ` 
-    <navbar v-on:loggedout="this.get_data" v-on:updatedstate="this.get_following"></navbar>
+    <navbar v-on:loggedout="this.get_following" v-on:updatedstate="this.get_following"></navbar>
     <div id=main>
         <img src="/static/Pictures/Show the world.png" style="width: 100%;" alt="Banner image">
         
@@ -40,7 +40,6 @@ let homeC = {
     },
     mounted: function() {
         document.title = "Home";
-        this.scroll();
         //this.get_users();
     },
     methods: {
@@ -66,22 +65,26 @@ let homeC = {
                 let response = await fetch("/api/following/"+ this.user.userid);
                 if (response.status == 200){
                     let result = await response.json();
+                    
                     this.following = result.followers
-                    this.get_following_posts()
+                    await this.get_following_posts()
                 }
+            }
+            else {
+                this.following = []
             }
             this.get_users();
         },
         get_following_posts: async function() {
-            for (let i = 0; i < this.following.length; i++) {
+            for (i in this.following) {
                 const element = this.following[i];
                 let response = await fetch("/api/" + element + "/posts");
                 if (response.status == 200){
                     let result = await response.json();
                     
                     for (i in result) {
-                        this.followposts.push(result[i]);
-                        this.get_username(i, "followpost");
+                        await this.followposts.push(result[i]);
+                        await this.get_username(this.followposts.length-1, "followpost");
                     }
                 }
             }
@@ -104,7 +107,7 @@ let homeC = {
                     this.userids = result.userids;
                     for (let i = 0; i < this.userids.length; i++) {
                         const element = this.userids[i];
-                        //if not following the user, add posts his posts to new posts
+                        //if not following the user, add posts to new posts
                         if (!this.following.includes(this.userids[i]) && this.userids[i] != this.user.userid){
                             users_posts = await this.get_posts(element);
                             if (users_posts.length != 0){
@@ -114,7 +117,6 @@ let homeC = {
                                 this.newposts.push(...users_posts)
                             }
                         }
-                        
                     }
 
                     // Sort by posttime.
@@ -129,16 +131,19 @@ let homeC = {
                                 this.posts.push(this.followposts[i*10+j]);
                             }
                             if (j==9){
-                                this.posts.push(this.newposts[i]);
+                                if(i < this.newposts.length) {
+                                    this.posts.push(this.newposts[i]);
+                                }
+                                
                             }     
                         }
-                        if (i*10+9> this.followposts.length){
+                        if (i*10+9> this.followposts.length && i*10+9 < this.newposts.length){
                             this.posts.push(...this.newposts.slice(i+1));
                             break;
                         } 
                     }
 
-                    if (this.user.username== ""){
+                    if (this.user.username== "" || this.following.length == 0){
                         this.posts = this.newposts
                     }
                 }
@@ -167,16 +172,6 @@ let homeC = {
             }
             
         },
-        scroll () {
-            window.onscroll = () => {
-              let bottomOfWindow = Math.max(window.pageYOffset, document.documentElement.scrollTop, document.body.scrollTop) + window.innerHeight === document.documentElement.offsetHeight
-          
-              if (bottomOfWindow) {
-               this.scrolledToBottom = true // replace it with your code
-               console.log("Bottom")
-              }
-           }
-          },
     }
 }
 
