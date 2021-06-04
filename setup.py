@@ -1,16 +1,3 @@
-# Code to update the database
-# API only allows 60 fetches a day, so we want to run this once a day. To get any new projects in.
-
-# DONE Figure out database structure.
-# DONE Implement a the structure into SQLite3 and flask.
-# DONE Use AJAX to fetch and Flask to serve this data when the webpage is requested.
-# TODO Preferably be able to find a way to see most recent project and dislpay on the index page.
-# TODO Find a way to update this database daily. Proposed way; Run the code once a day in pythonanywhere
-    # and get the JSON file. Use this to loop through the database and update required fields.
-    # Need to think about deleting projects though it is unlikely done much anyway.
-# TODO figure out how to use my own github account to get private repositories. IMPORTANT do not leak private key.
-    # Filter wanted and unwanted repos...
-
 from flask import g
 import sqlite3
 import urllib.request, json
@@ -76,5 +63,5 @@ def update_insert(repos, userid):
             sql = f"INSERT INTO posts (type, text, userid, projectid, date) VALUES(?, ?, ?, ?, ?);"
             query_db(sql, get_db(),"created a new project", None, userid, id, repo["created"])
         
-        else: # elif not repo["overwrite"]: update_project()
+        else:
             print("Project already exists")

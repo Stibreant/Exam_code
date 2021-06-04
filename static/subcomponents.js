@@ -194,9 +194,6 @@ let projectC = {
                 }
             }
         },
-        checkbox: function(){
-            console.log(!this.override)
-        }
     }
 };
 

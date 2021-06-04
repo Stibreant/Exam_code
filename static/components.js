@@ -35,31 +35,10 @@ let homeC = {
             userids: [],
         }
     },
-    created: function() {
-        //this.get_data();
-    },
     mounted: function() {
         document.title = "Home";
-        //this.get_users();
     },
     methods: {
-        get_data: async function(){
-            let response = await fetch("/api/projects");
-            if (response.status == 200){
-                let result = await response.json();
-                this.projects = result;
-            }
-
-            for (let i = 0; i < this.projects.length; i++) {
-                const element = this.projects[i];
-
-                let response = await fetch("/api/user/"+ element.userid);
-                if (response.status == 200){
-                    let result = await response.json();
-                    element.username = result.username;
-                }
-            }  
-        },
         get_following: async function() {
             if (this.user.userid != ""){
                 let response = await fetch("/api/following/"+ this.user.userid);

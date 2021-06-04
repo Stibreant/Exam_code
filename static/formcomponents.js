@@ -65,10 +65,6 @@ let projectformC = {
                     this.registerModel.id = result.projectid;
                     this.$emit('newProject', this.registerModel, result.postid);
                 }
-                
-                /*if (this.errors.length == 0){
-                    this.$router.push('/user/' + state.user.username);
-                }*/
             }
             
         },
@@ -86,10 +82,6 @@ let projectformC = {
                 if (this.id != null){
                     this.$emit('submit', this.registerModel);
                 }
-                
-                /*if (this.errors.length == 0){
-                    this.$router.push('/user/' + state.user.username);
-                }*/
             }
         },
     },
