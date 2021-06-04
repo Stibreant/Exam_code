@@ -20,7 +20,7 @@ def query_db(query, db, *args, **kwargs):
     return (rv[0] if rv else None) if one else rv
 
 
-# db_update() Updates the information, should be run once a day with the github API
+# db_update() Updates the information
 def db_update(username):
     result_list = []
     if username != "":

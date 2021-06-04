@@ -1,8 +1,5 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session, g, abort
+from flask import Flask, render_template, request, session, g
 from setup import query_db, db_update, update_insert
-import click
-from flask import current_app
-from flask.cli import with_appcontext
 import sqlite3, json
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
