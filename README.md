@@ -56,3 +56,6 @@ Start the application by running `app.py` in the `Exam_code` folder.
 | /api/\<userid1\>/follows/\<userid2\> | Gives true  or false          | N/A                         | N/A                               | User1 stops  following user 2 |
 | /api/\<username\>/posts              | Get posts  of user            | Posts a  new post           | Alters list  of posts             | Deletes list  of posts        |
 | /api/post/\<postid\>                 | Get post                      | N/A                         | Alters post                       | Deletes post                  |
+
+
+Code on github: [Code](https://github.com/Stibreant/Exam_code)
