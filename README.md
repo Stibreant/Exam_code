@@ -7,8 +7,8 @@ Start the application by running `app.py` in the `Exam_code` folder.
 
 - Users:
   * If a user tries to register and fails a specification e.g. password too short or etc., the server sends a JSON with all errors that the user must fix to register.
-  * Users may be choose to delete their account and subsequently all information about this user will be deleted.
-  * Users can change their username and Bio, Changes still gets checked for the same criteria as when a user is created.
+  * Users may choose to delete their account and subsequently all information about this user will be deleted.
+  * Users can change their username, bio, twitter and email, Changes still gets checked for the same criteria as when a user is created.
   * Users can change the color of elements in their own page.
 
 - Projects:
@@ -31,18 +31,18 @@ Start the application by running `app.py` in the `Exam_code` folder.
 
 # Test Data
 - users:
- * username: lazyprogrammer password: passwrd                   (A beginner of the app)
- * username: Musk123 password: ElongatedMelon                   (Normal user)
- * username: Spammer password: 12345                            (Has a lot of posts and projects)
- * username: Follow4Follow password: Pweasefollow                    (Follows everyone)
- * username: TheLoner password: Alpha                           (Follows no one)
- * username: Leander password: 12345                         (Shows the app taking in repos from github with username *leandernikolaus*)
- * username: stibreant password: 1234                        (Shows repos and links working)
+  * username: lazyprogrammer password: passwrd                   (A beginner of the app)
+  * username: Musk123 password: ElongatedMelon                   (Normal user)
+  * username: Spammer password: 12345                            (Has a lot of posts and projects)
+  * username: Follow4Follow password: Pweasefollow                    (Follows everyone)
+  * username: TheLoner password: Alpha                           (Follows no one)
+  * username: Leander password: 12345                         (Shows the app taking in repos from github with username *leandernikolaus*)
+  * username: stibreant password: 1234                        (Shows repos and links working)
 
 # Rest API
 
-\**(N/A)-expected function but not implemented in this app*
-\**No expected function and not implemented*
+\* *(N/A) - expected function but not implemented in this app* \
+\* *(empty) - No expected function and not implemented*
 
 | Link                                 | GET                           | POST                        | PUT                               | DELETE                        |
 |--------------------------------------|-------------------------------|-----------------------------|-----------------------------------|-------------------------------|
