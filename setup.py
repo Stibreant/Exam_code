@@ -49,7 +49,6 @@ def db_update(username):
                     tmp["description"] = repo["description"]
                     tmp["website"] = repo["html_url"]
                     tmp["link"] = repo["html_url"]
-                    tmp["private"] = repo["private"]
                     tmp["githubid"] = repo["id"]
                     result_list.append(tmp)
                 except:
@@ -66,8 +65,8 @@ def update_insert(repos, userid):
     for repo in repos:
         if repo["githubid"] not in oldIDs[0]: 
             
-            sql = f"INSERT INTO projects (userid, githubid ,name, created, updated, description, website, link, private) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);"
-            query_db(sql, get_db(), userid, repo["githubid"], repo["name"], repo["created"], repo["updated"], repo["description"] ,repo["website"] ,repo["link"],repo["private"])
+            sql = f"INSERT INTO projects (userid, githubid ,name, created, updated, description, website, link) VALUES(?, ?, ?, ?, ?, ?, ?, ?);"
+            query_db(sql, get_db(), userid, repo["githubid"], repo["name"], repo["created"], repo["updated"], repo["description"] ,repo["website"] ,repo["link"])
             
             id = query_db("SELECT MAX(ID) FROM Projects", get_db(), one=True)[0]
             

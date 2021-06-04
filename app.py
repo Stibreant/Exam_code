@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 
 app = Flask(__name__)
 DATABASE = './database.db'
-app.secret_key = 'some_secret'
+app.secret_key = 'zH2l72&X#Ho^5iWnc7@#nbdmHK63XmG1'
 
 app.config.update(
     SESSION_COOKIE_SECURE=True,
@@ -286,7 +286,6 @@ def serve(userid):
             result[i]["updated"] = row[5]
             result[i]["description"] = row[6]
             result[i]["link"] = row[8]
-            result[i]["private"] = row[9]
 
         return json.dumps(result)
 
@@ -334,7 +333,6 @@ def feed():
             result[i]["updated"] = row[5]
             result[i]["description"] = row[6]
             result[i]["link"] = row[8]
-            result[i]["private"] = row[9]
 
         return json.dumps(result)
 
@@ -354,8 +352,6 @@ def project(projectid):
         result["updated"] = row[5]
         result["description"] = row[6]
         result["link"] = row[8]
-        result["private"] = row[9]
-
         return json.dumps(result)
     
     row = query_db("SELECT * FROM projects WHERE id = ?;", get_db(), projectid, one=True)
@@ -370,7 +366,6 @@ def project(projectid):
             result["updated"] = row[4]
             result["description"] = row[5]
             result["link"] = row[7]
-            result["private"] = row[8]
         else: 
             result["errors"] = ["Permission denied"]
         return json.dumps(result)
@@ -395,7 +390,6 @@ def project(projectid):
             project["updated"] = row[4]
             project["description"] = row[5]
             project["link"] = row[7]
-            project["private"] = row[8]
 
             result["errors"] = errors
             result["project"] = project
